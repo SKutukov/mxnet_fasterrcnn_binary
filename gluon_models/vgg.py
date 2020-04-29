@@ -1,16 +1,25 @@
 from mxnet.gluon import nn
 from mxnet.initializer import Xavier
+import numpy as np
+
 vgg_spec = {11: ([1, 1, 2, 2, 2], [64, 128, 256, 512, 512]),
             13: ([2, 2, 2, 2, 2], [64, 128, 256, 512, 512]),
             16: ([2, 2, 3, 3, 3], [64, 128, 256, 512, 512]),
             19: ([2, 2, 4, 4, 4], [64, 128, 256, 512, 512])}
 
+step_spec = {
+    0: tuple(range(0, 13)),
+    1: (0,) + tuple(range(4, 13)),
+    2: (0,) + tuple(range(7, 13)),
+    3: (0,) + tuple(range(10, 13)),
+    4: (0,)
+}
 class VGG(nn.HybridBlock):
-    def __init__(self, layers, filters, classes=1000, batch_norm=True, isBin=False, **kwargs):
+    def __init__(self, layers, filters, classes=1000, batch_norm=False, isBin=False, step=0, **kwargs):
         super(VGG, self).__init__(**kwargs)
         assert len(layers) == len(filters)
         with self.name_scope():
-            self.features = self._make_features(layers, filters, batch_norm, isBin)
+            self.features = self._make_features(layers, filters, batch_norm, isBin, step)
             self.features.add(nn.Dense(4096, activation='relu',
                                        weight_initializer='normal',
                                        bias_initializer='zeros'))
@@ -23,7 +32,7 @@ class VGG(nn.HybridBlock):
                                    weight_initializer='normal',
                                    bias_initializer='zeros')
 
-    def _make_features(self, layers, filters, batch_norm, isBin):
+    def _make_features(self, layers, filters, batch_norm, isBin, step):
         featurizer = nn.HybridSequential(prefix='')
 
         count = 0
@@ -31,7 +40,7 @@ class VGG(nn.HybridBlock):
             for _ in range(num):
 
                 if isBin:
-                    if count not in (0, 12):
+                    if count not in step_spec[step]:
                         conv_layer = nn.QConv2D(filters[i], kernel_size=3, padding=1,
                                                  weight_initializer=Xavier(rnd_type='gaussian',
                                                                            factor_type='out',
@@ -44,8 +53,8 @@ class VGG(nn.HybridBlock):
                         #                         groups=filters[i],
                         #                         bias_initializer='zeros')
                         # featurizer.add(conv_layer)
-                        featurizer.add(nn.Activation('tanh'))
-                        # featurizer.add(nn.Dropout(0.25))
+                        featurizer.add(nn.Activation('relu'))
+
                     else:
                         conv_layer = nn.Conv2D(filters[i], kernel_size=3, padding=1,
                                   weight_initializer=Xavier(rnd_type='gaussian',
@@ -62,7 +71,7 @@ class VGG(nn.HybridBlock):
                                            bias_initializer='zeros')
                     featurizer.add(conv_layer)
                     featurizer.add(nn.Activation('relu'))
-
+                # featurizer.add(nn.Dropout(0.25))
                 count += 1
 
                 if batch_norm:
@@ -86,9 +95,9 @@ def get_vgg(num_layers, **kwargs):
 
 class VGGConvBlock(nn.HybridBlock):
 
-    def __init__(self, isBin=False, **kwargs):
+    def __init__(self, isBin=False, step=0,  **kwargs):
         super(VGGConvBlock, self).__init__(**kwargs)
-        base_model = get_vgg(16, isBin=isBin)
+        base_model = get_vgg(16, isBin=isBin, step=step)
         self.features = nn.HybridSequential()
         # Exclude last 5 vgg feature layers (1 max pooling + 2 * (fc + dropout))
         for layer in base_model.features[:-5]:

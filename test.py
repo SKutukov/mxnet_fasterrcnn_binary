@@ -98,6 +98,7 @@ def parse_args():
     parser.add_argument('--rcnn-nms-thresh', type=float, default=0.3)
     parser.add_argument('--rcnn-conf-thresh', type=float, default=1e-3)
     parser.add_argument('--is_bin', action='store_true', default=False)
+    parser.add_argument('--step', type=int, default=1)
     args = parser.parse_args()
     args.img_pixel_means = ast.literal_eval(args.img_pixel_means)
     args.img_pixel_stds = ast.literal_eval(args.img_pixel_stds)
@@ -139,7 +140,8 @@ def get_vgg16_test(args):
                         rpn_post_topk=args.rpn_post_nms_topk, rpn_nms_thresh=args.rpn_nms_thresh,
                         rpn_min_size=args.rpn_min_size,
                         num_classes=args.rcnn_num_classes, rcnn_feature_stride=args.rcnn_feat_stride,
-                        rcnn_pooled_size=args.rcnn_pooled_size, rcnn_batch_size=args.rcnn_batch_size, isBin=args.is_bin)
+                        rcnn_pooled_size=args.rcnn_pooled_size, rcnn_batch_size=args.rcnn_batch_size, isBin=args.is_bin,
+                        step=args.step)
 
 
 def get_resnet50_test(args):

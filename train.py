@@ -76,26 +76,20 @@ def train_net(sym, roidb, args):
 
     # learning schedule
     base_lr = args.lr
-    # lr_factor = 0.1
-    # lr_epoch = [int(epoch) for epoch in args.lr_decay_epoch.split(',')]
-    # lr_epoch_diff = [epoch - args.start_epoch for epoch in lr_epoch if epoch > args.start_epoch]
-    # lr = base_lr * (lr_factor ** (len(lr_epoch) - len(lr_epoch_diff)))
-    # lr_iters = [int(epoch * len(roidb) / batch_size) for epoch in lr_epoch_diff]
-    # logger.info('lr %f lr_epoch_diff %s lr_iters %s' % (lr, lr_epoch_diff, lr_iters))
-    lr_scheduler = mx.lr_scheduler.FactorScheduler(step=20000, factor=0.9)
+    lr_factor = 0.1
+    lr_epoch = [int(epoch) for epoch in args.lr_decay_epoch.split(',')]
+    lr_epoch_diff = [epoch - args.start_epoch for epoch in lr_epoch if epoch > args.start_epoch]
+    lr = base_lr * (lr_factor ** (len(lr_epoch) - len(lr_epoch_diff)))
+    lr_iters = [int(epoch * len(roidb) / batch_size) for epoch in lr_epoch_diff]
+    logger.info('lr %f lr_epoch_diff %s lr_iters %s' % (lr, lr_epoch_diff, lr_iters))
+    lr_scheduler = mx.lr_scheduler.MultiFactorScheduler(lr_iters, lr_factor)
     # optimizer
-    # optimizer_params = {'momentum': 0.9,
-    #                     'wd': 0.0005,
-    #                     'learning_rate': lr,
-    #                     'lr_scheduler': lr_scheduler,
-    #                     'rescale_grad': (1.0 / batch_size),
-    #                     'clip_gradient': 5}
-    optimizer_params = {
-        'learning_rate': base_lr,
-        'wd': 0.0005,
-        "lr_scheduler": lr_scheduler,
-        'momentum': 0.9
-    }
+    optimizer_params = {'momentum': 0.9,
+                        'wd': 0.0005,
+                        'learning_rate': lr,
+                        'lr_scheduler': lr_scheduler,
+                        'rescale_grad': (1.0 / batch_size),
+                        'clip_gradient': 5}
 
     # train
     mod = Module(sym, data_names=data_names, label_names=label_names,
@@ -123,8 +117,8 @@ def parse_args():
     parser.add_argument('--log-interval', type=int, default=100, help='logging mini batch interval')
     parser.add_argument('--save-prefix', type=str, default='', help='saving params prefix')
     # faster rcnn params
-    parser.add_argument('--img-short-side', type=int, default=580)
-    parser.add_argument('--img-long-side', type=int, default=970)
+    parser.add_argument('--img-short-side', type=int, default=600)
+    parser.add_argument('--img-long-side', type=int, default=1000)
     parser.add_argument('--img-pixel-means', type=str, default='(0.0, 0.0, 0.0)')
     parser.add_argument('--img-pixel-stds', type=str, default='(1.0, 1.0, 1.0)')
     parser.add_argument('--net-fixed-params', type=str, default='["conv0", "stage1", "gamma", "beta"]')
@@ -149,6 +143,8 @@ def parse_args():
     parser.add_argument('--rcnn-fg-overlap', type=float, default=0.5)
     parser.add_argument('--rcnn-bbox-stds', type=str, default='(0.1, 0.1, 0.2, 0.2)')
     parser.add_argument('--is_bin', action='store_true', default=False)
+    parser.add_argument('--step', type=int, default=1)
+
     args = parser.parse_args()
     args.img_pixel_means = ast.literal_eval(args.img_pixel_means)
     args.img_pixel_stds = ast.literal_eval(args.img_pixel_stds)
@@ -201,7 +197,9 @@ def get_vgg16_train(args):
     args.img_pixel_means = (123.68, 116.779, 103.939)
     args.img_pixel_stds = (1.0, 1.0, 1.0)
     # args.net_fixed_params = ['vgg0_conv0_', 'vgg0_conv1_']
-    args.net_fixed_params = []
+    # args.net_fixed_params = ['vgg0_conv0_', 'vgg0_conv7', 'vgg0_conv8', 'vgg0_conv9']
+    args.net_fixed_params = ['vgg0_conv0_', 'vgg0_qconv0', 'vgg0_qconv1', 'vgg0_qconv2',
+                             'vgg0_qconv3', 'vgg0_qconv4', 'vgg0_qconv5']
     args.rpn_feat_stride = 16
     args.rcnn_feat_stride = 16
     args.rcnn_pooled_size = (7, 7)
@@ -212,7 +210,8 @@ def get_vgg16_train(args):
                          num_classes=args.rcnn_num_classes, rcnn_feature_stride=args.rcnn_feat_stride,
                          rcnn_pooled_size=args.rcnn_pooled_size, rcnn_batch_size=args.rcnn_batch_size,
                          rcnn_batch_rois=args.rcnn_batch_rois, rcnn_fg_fraction=args.rcnn_fg_fraction,
-                         rcnn_fg_overlap=args.rcnn_fg_overlap, rcnn_bbox_stds=args.rcnn_bbox_stds, isBin=args.is_bin)
+                         rcnn_fg_overlap=args.rcnn_fg_overlap, rcnn_bbox_stds=args.rcnn_bbox_stds, isBin=args.is_bin,
+                         step=args.step)
 
 
 def get_resnet50_train(args):

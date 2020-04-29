@@ -76,7 +76,7 @@ def get_vgg_top_feature(data):
 def get_vgg_train(anchor_scales, anchor_ratios, rpn_feature_stride,
                   rpn_pre_topk, rpn_post_topk, rpn_nms_thresh, rpn_min_size, rpn_batch_rois,
                   num_classes, rcnn_feature_stride, rcnn_pooled_size, rcnn_batch_size,
-                  rcnn_batch_rois, rcnn_fg_fraction, rcnn_fg_overlap, rcnn_bbox_stds, isBin):
+                  rcnn_batch_rois, rcnn_fg_fraction, rcnn_fg_overlap, rcnn_bbox_stds, isBin, step):
     num_anchors = len(anchor_scales) * len(anchor_ratios)
 
     data = mx.symbol.Variable(name="data")
@@ -87,7 +87,7 @@ def get_vgg_train(anchor_scales, anchor_ratios, rpn_feature_stride,
     rpn_bbox_weight = mx.symbol.Variable(name='bbox_weight')
 
     # shared convolutional layers
-    GLUON_LAYER = VGGConvBlock(isBin=isBin)
+    GLUON_LAYER = VGGConvBlock(isBin=isBin, step=step)
     GLUON_LAYER.hybridize()
     conv_feat = GLUON_LAYER(data)
 
@@ -161,14 +161,14 @@ def get_vgg_train(anchor_scales, anchor_ratios, rpn_feature_stride,
 
 def get_vgg_test(anchor_scales, anchor_ratios, rpn_feature_stride,
                  rpn_pre_topk, rpn_post_topk, rpn_nms_thresh, rpn_min_size,
-                 num_classes, rcnn_feature_stride, rcnn_pooled_size, rcnn_batch_size, isBin):
+                 num_classes, rcnn_feature_stride, rcnn_pooled_size, rcnn_batch_size, isBin, step):
     num_anchors = len(anchor_scales) * len(anchor_ratios)
 
     data = mx.symbol.Variable(name="data")
     im_info = mx.symbol.Variable(name="im_info")
 
     # shared convolutional layers
-    GLUON_LAYER = VGGConvBlock(isBin=isBin)
+    GLUON_LAYER = VGGConvBlock(isBin=isBin, step=step)
     GLUON_LAYER.hybridize()
     conv_feat = GLUON_LAYER(data)
     # conv_feat = get_vgg_feature(data)
