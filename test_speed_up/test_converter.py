@@ -20,7 +20,7 @@ def dummy_data(ctx):
     im_tensor, im_info, im_orig = load_test(path_to_image, short=img_short_side, max_size=img_long_side,
                                             mean=img_pixel_means, std=img_pixel_stds)
     data_batch = generate_batch(im_tensor, im_info)
-    return mx.nd.random.uniform(shape=(1, 3, 1000, 600), ctx=ctx)
+    return [im_tensor, im_info]
 
 
 def save(ctx, args):
@@ -30,21 +30,23 @@ def save(ctx, args):
     RES_FILENAME = "res_%s.txt" % args.block_part
     if args.part == 1:
         with open(RES_FILENAME, 'w') as res_file:
+
+            data = mx.symbol.Variable(name="data")
+            im_info = mx.symbol.Variable(name="im_info")
+            group = mx.symbol.Group([data, im_info])
             # Export as symbol, so it can be used with C API
             orig_net = mx.gluon.nn.SymbolBlock.imports(
-                        "/home/skutukov/work/test_model/test-symbol.json",
+                        args.or_symbol_file,
                         ['data', 'im_info'],
-                        param_file="/home/skutukov/work/test_model/test-0000.params",
+                        param_file=args.or_param_file,
                         ctx=ctx)
 
-            # This dummy pass is needed to make correct symbol export possible, but does not replace the first one
-            data = dummy_data(ctx)
-            _ = orig_net(data)
+            data_batch = dummy_data(mx.cpu())
             # orig_net.summary(data)
             # Intermediate symbolic model, non-compressed
             star_time = time.time()
             for i in range(0, test_count):
-                _ = orig_net(data)
+                _ = orig_net(data_batch[0], data_batch[1])
 
             dt1 = (time.time() - star_time)/test_count
 
@@ -62,28 +64,19 @@ def save(ctx, args):
                 print("line", line)
                 dt1 = float(line.split('\n')[0].split(' ')[-1])
 
+            orig_net = mx.gluon.nn.SymbolBlock.imports(
+                args.bin_symbol_file,
+                ['data', 'im_info'],
+                param_file=args.bin_param_file,
+                ctx=ctx)
 
-            # orig_net.rpn.init_feature_extractor_fast(ctx)
-
-            feature_extractor_fast = []
-            for block_part in range(0, 8):
-                feature_extractor_fast.append(
-                    mx.gluon.nn.SymbolBlock.imports(
-                        "%s_test-symbol.json" % block_part,
-                        ['data'],
-                        param_file="%s_test-0000.params" % block_part,
-                        ctx=ctx))
-
-
-            # orig_net.rpn.feature_extractor_fast(data)
-            # # Compressed symbolic model
-            # net2 = mx.gluon.nn.SymbolBlock.imports(prefix + symbol_file, ['data'], param_file=prefix + param_file, ctx=ctx)
+            # This dummy pass is needed to make correct symbol export possible, but does not replace the first one
+            data_batch = dummy_data(ctx)
+            # orig_net.summary(data)
+            # Intermediate symbolic model, non-compressed
             star_time = time.time()
             for i in range(0, test_count):
-                data, _ = dummy_data(ctx)
-                for index, block in enumerate(feature_extractor_fast):
-                    # data, _ = globals()["dummy_data%s" % i](ctx)
-                    data = block(data)
+                _ = orig_net(data_batch[0], data_batch[1])
 
             dt2 = (time.time() - star_time) / test_count
 
@@ -99,7 +92,10 @@ def save(ctx, args):
 def parse_args():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument("--part", type=int)
-    parser.add_argument("--block_part", type=str)
+    parser.add_argument("--or_param_file", type=str)
+    parser.add_argument("--or_symbol_file", type=str)
+    parser.add_argument("--bin_param_file", type=str)
+    parser.add_argument("--bin_symbol_file", type=str)
 
     return parser.parse_args()
 

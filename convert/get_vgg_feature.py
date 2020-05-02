@@ -16,7 +16,7 @@ GLUON_LAYER = VGGConvBlock(isBin=True, step=4)
 GLUON_LAYER.hybridize()
 conv_feat = GLUON_LAYER(data)
 
-arg_params, aux_params = load_param("/home/skutukov/Downloads/Send-Archive/-0012.params", ctx=mx.cpu())
+arg_params, aux_params = load_param("/home/skutukov/work/mxnet_fasterrcnn_binary/convert/temp-0000.params", ctx=mx.cpu())
 check_shape(conv_feat, data_shapes, arg_params, aux_params)
 
 mod = Module(conv_feat, data_names, label_names, context=mx.cpu())
@@ -25,5 +25,5 @@ mod.init_params(arg_params=arg_params, aux_params=aux_params)
 
 
 data1, _ = dummy_data(ctx=mx.cpu())
-mod.forward(data1)
-mod.save_checkpoint('test', epoch=0)
+# mod.forward(data1)
+mod.save_checkpoint('test_vgg', epoch=0)
