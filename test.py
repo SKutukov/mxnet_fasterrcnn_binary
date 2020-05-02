@@ -11,7 +11,7 @@ from symdata.bbox import im_detect
 from symdata.loader import TestLoader
 from symnet.logger import logger
 from symnet.model import load_param, check_shape
-
+from symdata.vis import vis_detection
 
 def test_net(sym, imdb, args):
     # print config
@@ -65,6 +65,7 @@ def test_net(sym, imdb, args):
                 indexes = np.where(det[:, 0] == j)[0]
                 all_boxes[j][i] = np.concatenate((det[:, -4:], det[:, [1]]), axis=-1)[indexes, :]
             pbar.update(data_batch.data[0].shape[0])
+
 
     # evaluate model
     imdb.evaluate_detections(all_boxes)

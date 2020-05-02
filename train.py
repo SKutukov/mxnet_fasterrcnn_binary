@@ -87,7 +87,7 @@ def train_net(sym, roidb, args):
     optimizer_params = {'momentum': 0.9,
                         'wd': 0.0005,
                         'learning_rate': lr,
-                        'lr_scheduler': lr_scheduler,
+                        # 'lr_scheduler': lr_scheduler,
                         'rescale_grad': (1.0 / batch_size),
                         'clip_gradient': 5}
 
@@ -111,7 +111,7 @@ def parse_args():
     parser.add_argument('--gpus', type=str, default='0', help='gpu devices eg. 0,1')
     parser.add_argument('--epochs', type=int, default=10, help='training epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='base learning rate')
-    parser.add_argument('--lr-decay-epoch', type=str, default='7', help='epoch to decay lr')
+    parser.add_argument('--lr-decay-epoch', type=str, default='7,15', help='epoch to decay lr')
     parser.add_argument('--resume', type=str, default='', help='path to last saved model')
     parser.add_argument('--start-epoch', type=int, default=0, help='start epoch for resuming')
     parser.add_argument('--log-interval', type=int, default=100, help='logging mini batch interval')
@@ -198,8 +198,12 @@ def get_vgg16_train(args):
     args.img_pixel_stds = (1.0, 1.0, 1.0)
     # args.net_fixed_params = ['vgg0_conv0_', 'vgg0_conv1_']
     # args.net_fixed_params = ['vgg0_conv0_', 'vgg0_conv7', 'vgg0_conv8', 'vgg0_conv9']
+    # args.net_fixed_params = ['vgg0_conv0_', 'vgg0_qconv0', 'vgg0_qconv1', 'vgg0_qconv2',
+    #                          'vgg0_qconv3', 'vgg0_qconv4', 'vgg0_qconv5',
+    #                          'vgg0_qconv6', 'vgg0_qconv7', 'vgg0_qconv8']
     args.net_fixed_params = ['vgg0_conv0_', 'vgg0_qconv0', 'vgg0_qconv1', 'vgg0_qconv2',
                              'vgg0_qconv3', 'vgg0_qconv4', 'vgg0_qconv5']
+    # args.net_fixed_params = ['vgg0_conv0', 'vgg0_qconv']
     args.rpn_feat_stride = 16
     args.rcnn_feat_stride = 16
     args.rcnn_pooled_size = (7, 7)

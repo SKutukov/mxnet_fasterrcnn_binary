@@ -19,59 +19,61 @@ class VGG(nn.HybridBlock):
         super(VGG, self).__init__(**kwargs)
         assert len(layers) == len(filters)
         with self.name_scope():
-            self.features = self._make_features(layers, filters, batch_norm, isBin, step)
-            self.features.add(nn.Dense(4096, activation='relu',
-                                       weight_initializer='normal',
-                                       bias_initializer='zeros'))
-            self.features.add(nn.Dropout(rate=0.5))
-            self.features.add(nn.Dense(4096, activation='relu',
-                                       weight_initializer='normal',
-                                       bias_initializer='zeros'))
+            self.features = self._make_features(layers, filters, batch_norm, step)
+            self.features.add((nn.Flatten()))
+            if isBin:
+                self.features.add(nn.QDense(4096,
+                                           weight_initializer='normal',
+                                           bias_initializer='zeros'))
+                self.features.add(nn.Activation('relu'))
+                self.features.add(nn.Dropout(rate=0.5))
+                self.features.add(nn.Dense(4096,
+                                           weight_initializer='normal',
+                                           bias_initializer='zeros'))
+                self.features.add(nn.Activation('relu'))
+            else:
+                self.features.add(nn.Dense(4096,
+                                           weight_initializer='normal',
+                                           bias_initializer='zeros'))
+                self.features.add(nn.Activation('relu'))
+                self.features.add(nn.Dropout(rate=0.5))
+                self.features.add(nn.Dense(4096,
+                                           weight_initializer='normal',
+                                           bias_initializer='zeros'))
+                self.features.add(nn.Activation('relu'))
+
+
             self.features.add(nn.Dropout(rate=0.5))
             self.output = nn.Dense(classes,
                                    weight_initializer='normal',
                                    bias_initializer='zeros')
 
-    def _make_features(self, layers, filters, batch_norm, isBin, step):
+    def _make_features(self, layers, filters, batch_norm, step):
         featurizer = nn.HybridSequential(prefix='')
 
         count = 0
         for i, num in enumerate(layers):
             for _ in range(num):
 
-                if isBin:
-                    if count not in step_spec[step]:
-                        conv_layer = nn.QConv2D(filters[i], kernel_size=3, padding=1,
-                                                 weight_initializer=Xavier(rnd_type='gaussian',
-                                                                           factor_type='out',
-                                                                           magnitude=2),
-                                                 bias_initializer='zeros',
-                                                 bits=1,
-                                                apply_scaling=True)
-                        featurizer.add(conv_layer)
-                        # conv_layer = nn.Conv2D(filters[i], kernel_size=1, padding=1,
-                        #                         groups=filters[i],
-                        #                         bias_initializer='zeros')
-                        # featurizer.add(conv_layer)
-                        featurizer.add(nn.Activation('relu'))
-
-                    else:
-                        conv_layer = nn.Conv2D(filters[i], kernel_size=3, padding=1,
-                                  weight_initializer=Xavier(rnd_type='gaussian',
-                                                            factor_type='out',
-                                                            magnitude=2),
-                                  bias_initializer='zeros')
-                        featurizer.add(conv_layer)
-                        featurizer.add(nn.Activation('relu'))
-                else:
-                    conv_layer = nn.Conv2D(filters[i], kernel_size=3, padding=1,
-                                           weight_initializer=Xavier(rnd_type='gaussian',
-                                                                     factor_type='out',
-                                                                     magnitude=2),
-                                           bias_initializer='zeros')
+                if count not in step_spec[step]:
+                    conv_layer = nn.QConv2D(filters[i], kernel_size=3, padding=1,
+                                             weight_initializer=Xavier(rnd_type='gaussian',
+                                                                       factor_type='out',
+                                                                       magnitude=2),
+                                             bias_initializer='zeros',
+                                             bits=1,
+                                            apply_scaling=True)
                     featurizer.add(conv_layer)
                     featurizer.add(nn.Activation('relu'))
-                # featurizer.add(nn.Dropout(0.25))
+                else:
+                    conv_layer = nn.Conv2D(filters[i], kernel_size=3, padding=1,
+                              weight_initializer=Xavier(rnd_type='gaussian',
+                                                        factor_type='out',
+                                                        magnitude=2),
+                              bias_initializer='zeros')
+                    featurizer.add(conv_layer)
+                    featurizer.add(nn.Activation('relu'))
+
                 count += 1
 
                 if batch_norm:
@@ -100,7 +102,21 @@ class VGGConvBlock(nn.HybridBlock):
         base_model = get_vgg(16, isBin=isBin, step=step)
         self.features = nn.HybridSequential()
         # Exclude last 5 vgg feature layers (1 max pooling + 2 * (fc + dropout))
-        for layer in base_model.features[:-5]:
+        for layer in base_model.features[:-8]:
+            self.features.add(layer)
+
+
+    def hybrid_forward(self, F, x, *args, **kwargs):
+        x = self.features(x)
+        return x
+
+class VGGTopFeature(nn.HybridBlock):
+    def __init__(self, isBin=False, step=0,  **kwargs):
+        super(VGGTopFeature, self).__init__(**kwargs)
+        base_model = get_vgg(16, isBin=isBin, step=step)
+        self.features = nn.HybridSequential()
+        # Exclude last 5 vgg feature layers (1 max pooling + 2 * (fc + dropout))
+        for layer in base_model.features[-7:]:
             self.features.add(layer)
 
 
