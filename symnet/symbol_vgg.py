@@ -1,6 +1,6 @@
 import mxnet as mx
 from . import proposal_target
-from gluon_models.vgg import VGGConvBlock
+from gluon_models.vgg import VGGConvBlock, VGGTopFeature
 
 def get_vgg_feature(data):
     # group 1
@@ -138,7 +138,9 @@ def get_vgg_train(anchor_scales, anchor_ratios, rpn_feature_stride,
         name='roi_pool', data=conv_feat, rois=rois, pooled_size=rcnn_pooled_size, spatial_scale=1.0 / rcnn_feature_stride)
 
     # rcnn top feature
-    top_feat = get_vgg_top_feature(roi_pool)
+    gluon_top_feature_layer = VGGTopFeature(isBin=isBin, step=step)
+    gluon_top_feature_layer.hybridize()
+    top_feat = gluon_top_feature_layer(roi_pool)
 
     # rcnn classification
     cls_score = mx.symbol.FullyConnected(name='cls_score', data=top_feat, num_hidden=num_classes)
@@ -204,7 +206,10 @@ def get_vgg_test(anchor_scales, anchor_ratios, rpn_feature_stride,
         name='roi_pool', data=conv_feat, rois=rois, pooled_size=rcnn_pooled_size, spatial_scale=1.0 / rcnn_feature_stride)
 
     # rcnn top feature
-    top_feat = get_vgg_top_feature(roi_pool)
+    # top_feat = get_vgg_top_feature(roi_pool)
+    gluon_top_feature_layer = VGGTopFeature(isBin=isBin, step=step)
+    gluon_top_feature_layer.hybridize()
+    top_feat = gluon_top_feature_layer(roi_pool)
 
     # rcnn classification
     cls_score = mx.symbol.FullyConnected(name='cls_score', data=top_feat, num_hidden=num_classes)
