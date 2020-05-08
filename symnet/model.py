@@ -26,7 +26,11 @@ weight_map = {
         'conv5_2_weight': 'vgg0_conv11_weight',
         'conv5_2_bias': 'vgg0_conv11_bias',
         'conv5_3_weight': 'vgg0_conv12_weight',
-        'conv5_3_bias': 'vgg0_conv12_bias'
+        'conv5_3_bias': 'vgg0_conv12_bias',
+    'fc6_weight': 'vgg1_dense0_weight',
+    'fc6_bias': 'vgg1_dense0_bias',
+    'fc7_weight': 'vgg1_dense1_weight',
+    'fc7_bias': 'vgg1_dense1_bias',
     }
 
 weight_map_0_1 = {
@@ -55,7 +59,11 @@ weight_map_0_1 = {
         'conv5_2_weight': 'vgg0_conv8_weight',
         'conv5_2_bias': 'vgg0_conv8_bias',
         'conv5_3_weight': 'vgg0_conv9_weight',
-        'conv5_3_bias': 'vgg0_conv9_bias'
+        'conv5_3_bias': 'vgg0_conv9_bias',
+        'fc6_weight': 'vgg1_dense0_weight',
+        'fc6_bias': 'vgg1_dense0_bias',
+        'fc7_weight': 'vgg1_dense1_weight',
+        'fc7_bias': 'vgg1_dense1_bias',
     }
 
 weight_map_1_2 = {
@@ -153,6 +161,8 @@ weight_map_4 = {
     'fc7_bias': 'vgg1_dense0_bias',
 }
 
+weight_map_res = {}
+
 def load_param(params, ctx=None):
     """same as mx.model.load_checkpoint, but do not load symnet and will convert context"""
     if ctx is None:
@@ -163,8 +173,8 @@ def load_param(params, ctx=None):
     for k, v in save_dict.items():
         tp, name = k.split(':', 1)
 
-        if name in weight_map_4.keys():
-            name = weight_map_4[name]
+        # if name in weight_map.keys():
+        #     name = weight_map[name]
 
         if tp == 'arg':
             arg_params[name] = v.as_in_context(ctx)
@@ -218,17 +228,36 @@ def initialize_frcnn(symbol, data_shapes, arg_params, aux_params):
 
 def initialize_bias(symbol, data_shapes, arg_params, aux_params):
     arg_shape_dict, aux_shape_dict = infer_param_shape(symbol, data_shapes)
-    for i in range(0, 13):
-        # init arg params
-        gamma_name = 'vgg0_batchnorm%d_gamma' % i
-        beta_name = 'vgg0_batchnorm%d_beta' % i
-        arg_params[gamma_name] = mx.random.normal(0.8, 1, shape=arg_shape_dict[gamma_name])
-        arg_params[beta_name] = mx.random.normal(0.4, 0.6, shape=arg_shape_dict[beta_name])
-        # init aux params
-        running_mean = 'vgg0_batchnorm%d_running_mean' % i
-        running_var = 'vgg0_batchnorm%d_running_var' % i
-        aux_params[running_mean] = mx.random.normal(0.4, 0.6, shape=aux_shape_dict[running_mean])
-        aux_params[running_var] = mx.random.normal(0.8, 1, shape=aux_shape_dict[running_var])
+    units = {
+        1: [1, 2, 3],
+        2: list(range(1, 5)),
+        3: list(range(1, 7)),
+    }
+    for i in range(1, 4):
+        for j in units[i]:
+            for k in [2, 3]:
+                # init arg params
+                # gamma_name = 'stage%d_unit%d_nb%d_gamma' % (i, j, k)
+                # beta_name = 'stage%d_unit%d_nb%d_beta' % (i, j, k)
+                # arg_params[gamma_name] = mx.random.normal(0.9, 1, shape=arg_shape_dict[gamma_name])
+                # arg_params[beta_name] = mx.random.normal(0., 0.1, shape=arg_shape_dict[beta_name])
+
+                # running_mean = 'stage%d_unit%d_nb%d_running_mean' % (i, j, k)
+                # running_var = 'stage%d_unit%d_nb%d_running_var' % (i, j, k)
+                # aux_params[running_mean] = mx.random.normal(0.0, 0.1, shape=aux_shape_dict[running_mean])
+                # aux_params[running_var] = mx.random.normal(0.9, 1, shape=aux_shape_dict[running_var])
+                pass
+    # for i in range(0, 13):
+    #     # init arg params
+    #     gamma_name = 'vgg0_batchnorm%d_gamma' % i
+    #     beta_name = 'vgg0_batchnorm%d_beta' % i
+    #     arg_params[gamma_name] = mx.random.normal(0.8, 1, shape=arg_shape_dict[gamma_name])
+    #     arg_params[beta_name] = mx.random.normal(0.4, 0.6, shape=arg_shape_dict[beta_name])
+    #     # init aux params
+    #     running_mean = 'vgg0_batchnorm%d_running_mean' % i
+    #     running_var = 'vgg0_batchnorm%d_running_var' % i
+    #     aux_params[running_mean] = mx.random.normal(0.4, 0.6, shape=aux_shape_dict[running_mean])
+    #     aux_params[running_var] = mx.random.normal(0.8, 1, shape=aux_shape_dict[running_var])
     #
     # for i in  range(0, 13): #(0, 1):
     #     conv_name = 'vgg0_conv%d_weight' % i

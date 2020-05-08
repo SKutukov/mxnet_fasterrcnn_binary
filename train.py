@@ -51,7 +51,7 @@ def train_net(sym, roidb, args):
     else:
         arg_params, aux_params = load_param(args.pretrained)
         arg_params, aux_params = initialize_frcnn(sym, data_shapes, arg_params, aux_params)
-        arg_params, aux_params = initialize_bias(sym, data_shapes, arg_params, aux_params)
+        # arg_params, aux_params = initialize_bias(sym, data_shapes, arg_params, aux_params)
     # check parameter shapes
     check_shape(sym, data_shapes + label_shapes, arg_params, aux_params)
 
@@ -86,8 +86,8 @@ def train_net(sym, roidb, args):
     # optimizer
     optimizer_params = {'momentum': 0.9,
                         'wd': 0.0005,
-                        'learning_rate': lr,
-                        # 'lr_scheduler': lr_scheduler,
+                        'learning_rate': base_lr,
+                        'lr_scheduler': lr_scheduler,
                         'rescale_grad': (1.0 / batch_size),
                         'clip_gradient': 5}
 
@@ -197,12 +197,12 @@ def get_vgg16_train(args):
     args.img_pixel_means = (123.68, 116.779, 103.939)
     args.img_pixel_stds = (1.0, 1.0, 1.0)
     # args.net_fixed_params = ['vgg0_conv0_', 'vgg0_conv1_']
-    # args.net_fixed_params = ['vgg0_conv0_', 'vgg0_conv7', 'vgg0_conv8', 'vgg0_conv9']
+    args.net_fixed_params = ['vgg0_conv0_', 'vgg0_conv7', 'vgg0_conv8', 'vgg0_conv9']
     # args.net_fixed_params = ['vgg0_conv0_', 'vgg0_qconv0', 'vgg0_qconv1', 'vgg0_qconv2',
     #                          'vgg0_qconv3', 'vgg0_qconv4', 'vgg0_qconv5',
     #                          'vgg0_qconv6', 'vgg0_qconv7', 'vgg0_qconv8']
-    args.net_fixed_params = ['vgg0_conv0_', 'vgg0_qconv0', 'vgg0_qconv1', 'vgg0_qconv2',
-                             'vgg0_qconv3', 'vgg0_qconv4', 'vgg0_qconv5']
+    # args.net_fixed_params = ['vgg0_conv0_', 'vgg0_qconv0', 'vgg0_qconv1', 'vgg0_qconv2',
+    #                          'vgg0_qconv3', 'vgg0_qconv4', 'vgg0_qconv5']
     # args.net_fixed_params = ['vgg0_conv0', 'vgg0_qconv']
     args.rpn_feat_stride = 16
     args.rcnn_feat_stride = 16
@@ -227,6 +227,8 @@ def get_resnet50_train(args):
     args.img_pixel_means = (0.0, 0.0, 0.0)
     args.img_pixel_stds = (1.0, 1.0, 1.0)
     args.net_fixed_params = ['conv0', 'stage1', 'gamma', 'beta']
+    args.net_fixed_params = ['conv0', 'stage1', 'stage2', 'gamma', 'beta']
+
     args.rpn_feat_stride = 16
     args.rcnn_feat_stride = 16
     args.rcnn_pooled_size = (14, 14)
@@ -249,7 +251,7 @@ def get_resnet101_train(args):
         args.save_prefix = 'model/resnet101'
     args.img_pixel_means = (0.0, 0.0, 0.0)
     args.img_pixel_stds = (1.0, 1.0, 1.0)
-    args.net_fixed_params = ['conv0', 'stage1', 'gamma', 'beta']
+    args.net_fixed_params = ['conv0', 'stage1', 'stage2', 'gamma', 'beta']
     args.rpn_feat_stride = 16
     args.rcnn_feat_stride = 16
     args.rcnn_pooled_size = (14, 14)

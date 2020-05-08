@@ -1,15 +1,28 @@
-def vis_detection(im_orig, detections, class_names, thresh=0.7):
+import cv2
+import numpy as np
+from skimage.io import imshow
+import matplotlib.pyplot as plt
+from bounding_box import bounding_box as bb
+import os
+
+def vis_detection(im_orig, detections, class_names, file='', thresh=0.7):
     """visualize [cls, conf, x1, y1, x2, y2]"""
-    import matplotlib.pyplot as plt
-    import random
-    plt.imshow(im_orig)
-    colors = [(random.random(), random.random(), random.random()) for _ in class_names]
+    cmap = ['black', 'navy', 'blue',  'silver', 'aqua', 'teal', 'olive',  'purple', 'green',
+             'fuchsia', 'lime',  'red', 'yellow',
+             'orange', 'red', 'maroon', 'fuchsia', 'purple', 'black', 'gray', 'silver']
+
+    im_orig = cv2.cvtColor(im_orig, cv2.COLOR_BGR2RGB)
+
     for [cls, conf, x1, y1, x2, y2] in detections:
         cls = int(cls)
         if cls > 0 and conf > thresh:
-            rect = plt.Rectangle((x1, y1), x2 - x1, y2 - y1,
-                                 fill=False, edgecolor=colors[cls], linewidth=3.5)
-            plt.gca().add_patch(rect)
-            plt.gca().text(x1, y1 - 2, '{:s} {:.3f}'.format(class_names[cls], conf),
-                           bbox=dict(facecolor=colors[cls], alpha=0.5), fontsize=12, color='white')
-    plt.show()
+
+            bb.add(im_orig, int(x1), int(y1), int(x2), int(y2),
+                   '{:s} {:.3f}'.format(class_names[cls], conf),
+                   cmap[cls])
+
+    # plt.axis('off')
+    # # plt.show()
+    # plt.savefig('test.png')
+    # cv2.imshow("d", im_orig)
+    cv2.imwrite(os.path.join('/home/skutukov/Pictures/result_full_precision', file.strip() + '.jpg'), im_orig)
