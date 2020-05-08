@@ -47,6 +47,48 @@ def residual_unit(data, num_filter, stride, dim_match, name, isBin=False):
     sum = mx.sym.ElementWiseSum(*[conv3, shortcut], name=name + '_plus')
     return sum
 
+class ResidualUnit(nn.HybridBlock):
+    def __init__(self, num_filter, stride, dim_match, isBin=False, prefix='',  **kwargs):
+        super(ResidualUnit, self).__init__(**kwargs)
+
+        self.dim_match = dim_match
+        self.features = nn.HybridSequential()
+        self.bn1 = nn.BatchNorm(use_global_stats=use_global_stats,  prefix=prefix + '_nb1_')
+        self.act1 = nn.Activation('relu')
+
+        self.scale = nn.Conv2D(channels=num_filter, kernel_size=(1, 1), strides=stride, use_bias=False,
+                               prefix=prefix + '_sc_')
+        if isBin:
+            self.features.add(nn.QConv2D(channels=int(num_filter * 0.25), kernel_size=(1, 1), strides=(1, 1), padding=(0, 0),
+                                        use_bias=False, apply_scaling=True, prefix=prefix + '_conv1_'))
+            self.features.add(nn.BatchNorm(use_global_stats=use_global_stats, prefix=prefix + '_nb2_'))
+            self.features.add(nn.Activation('relu'))
+            self.features.add(nn.QConv2D(channels=int(num_filter * 0.25), kernel_size=(3, 3), strides=stride, padding=(1, 1),
+                                        use_bias=False, apply_scaling=True, prefix=prefix + '_conv2_'))
+            self.features.add(nn.BatchNorm(use_global_stats=use_global_stats, prefix=prefix + '_nb3_'))
+            self.features.add(nn.Activation('relu'))
+            self.features.add(nn.QConv2D(channels=num_filter, kernel_size=(1, 1), strides=(1, 1), padding=(0, 0),
+                                        use_bias=False, apply_scaling=True, prefix=prefix + '_conv3_'))
+        else:
+            self.features.add(nn.Conv2D(channels=int(num_filter * 0.25), kernel_size=(1, 1), strides=(1, 1), padding=(0, 0),
+                                        use_bias=False, prefix=prefix + '_conv1_'))
+            self.features.add(nn.BatchNorm(use_global_stats=use_global_stats, prefix=prefix + '_nb2_'))
+            self.features.add(nn.Activation('relu'))
+            self.features.add(nn.Conv2D(channels=int(num_filter * 0.25), kernel_size=(3, 3), strides=stride, padding=(1, 1),
+                                        use_bias=False, prefix=prefix + '_conv2_'))
+            self.features.add(nn.BatchNorm(use_global_stats=use_global_stats, prefix=prefix + '_nb3_'))
+            self.features.add(nn.Activation('relu'))
+            self.features.add(nn.Conv2D(channels=num_filter, kernel_size=(1, 1), strides=(1, 1), padding=(0, 0),
+                                        use_bias=False, prefix=prefix + '_conv3_'))
+
+    def hybrid_forward(self, F, x, *args, **kwargs):
+        if self.dim_match:
+            shortcut = x
+        else:
+            shortcut = self.scale(x)
+
+        feat = self.features(x)
+        return feat + shortcut
 
 def get_resnet_feature(data, units, filter_list):
     # res1

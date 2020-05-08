@@ -88,9 +88,9 @@ class VGG(nn.HybridBlock):
         return x
 
 
-def get_vgg(num_layers, **kwargs):
+def get_vgg(num_layers, isBin, step, **kwargs):
     layers, filters = vgg_spec[num_layers]
-    net = VGG(layers, filters, **kwargs)
+    net = VGG(layers, filters, isBin=isBin, step=step, **kwargs)
     return net
 
 

@@ -48,6 +48,7 @@ def train_net(sym, roidb, args):
     # load and initialize params
     if args.resume:
         arg_params, aux_params = load_param(args.resume)
+        # arg_params, aux_params = initialize_bias(sym, data_shapes, arg_params, aux_params)
     else:
         arg_params, aux_params = load_param(args.pretrained)
         arg_params, aux_params = initialize_frcnn(sym, data_shapes, arg_params, aux_params)
