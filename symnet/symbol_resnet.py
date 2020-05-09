@@ -1,23 +1,43 @@
 import mxnet as mx
 from . import proposal_target
+from mxnet.gluon import nn
+from mxnet.initializer import Xavier
 
 eps=2e-5
 use_global_stats=True
 workspace=1024
 
 
-def residual_unit(data, num_filter, stride, dim_match, name):
+def residual_unit(data, num_filter, stride, dim_match, name, isBin=False):
     bn1 = mx.sym.BatchNorm(data=data, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name=name + '_bn1')
     act1 = mx.sym.Activation(data=bn1, act_type='relu', name=name + '_relu1')
-    conv1 = mx.sym.Convolution(data=act1, num_filter=int(num_filter * 0.25), kernel=(1, 1), stride=(1, 1), pad=(0, 0),
-                               no_bias=True, workspace=workspace, name=name + '_conv1')
+    if isBin:
+        gluon_layer1 = nn.QConv2D(channels=int(num_filter * 0.25), kernel_size=(1, 1), strides=(1, 1), padding=(0, 0),
+                                 prefix=name + '_conv1_', apply_scaling=True)
+        gluon_layer1.hybridize()
+        conv1 = gluon_layer1(act1)
+    else:
+        conv1 = mx.sym.Convolution(data=act1, num_filter=int(num_filter * 0.25), kernel=(1, 1), stride=(1, 1), pad=(0, 0),
+                                   no_bias=True, workspace=workspace, name=name + '_conv1')
     bn2 = mx.sym.BatchNorm(data=conv1, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name=name + '_bn2')
     act2 = mx.sym.Activation(data=bn2, act_type='relu', name=name + '_relu2')
-    conv2 = mx.sym.Convolution(data=act2, num_filter=int(num_filter * 0.25), kernel=(3, 3), stride=stride, pad=(1, 1),
-                               no_bias=True, workspace=workspace, name=name + '_conv2')
+    if isBin:
+        gluon_layer2 = nn.QConv2D(channels=int(num_filter * 0.25), kernel_size=3, strides=stride, padding=(1, 1),
+                                 prefix=name + '_conv2_', apply_scaling=True)
+        gluon_layer2.hybridize()
+        conv2 = gluon_layer2(act2)
+    else:
+        conv2 = mx.sym.Convolution(data=act2, num_filter=int(num_filter * 0.25), kernel=(3, 3), stride=stride, pad=(1, 1),
+                                   no_bias=True, workspace=workspace, name=name + '_conv2')
     bn3 = mx.sym.BatchNorm(data=conv2, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name=name + '_bn3')
     act3 = mx.sym.Activation(data=bn3, act_type='relu', name=name + '_relu3')
-    conv3 = mx.sym.Convolution(data=act3, num_filter=num_filter, kernel=(1, 1), stride=(1, 1), pad=(0, 0), no_bias=True,
+    if isBin:
+        gluon_layer3 = nn.QConv2D(channels=num_filter, kernel_size=(1, 1), strides=(1, 1), padding=(0, 0),
+                                 prefix=name + '_conv3_', apply_scaling=True)
+        gluon_layer3.hybridize()
+        conv3 = gluon_layer3(act3)
+    else:
+        conv3 = mx.sym.Convolution(data=act3, num_filter=num_filter, kernel=(1, 1), stride=(1, 1), pad=(0, 0), no_bias=True,
                                workspace=workspace, name=name + '_conv3')
     if dim_match:
         shortcut = data
@@ -27,7 +47,57 @@ def residual_unit(data, num_filter, stride, dim_match, name):
     sum = mx.sym.ElementWiseSum(*[conv3, shortcut], name=name + '_plus')
     return sum
 
+class ResidualUnit(nn.HybridBlock):
+    def __init__(self, num_filter, stride, dim_match, isBin=False, prefix='',  **kwargs):
+        super(ResidualUnit, self).__init__(**kwargs)
 
+        self.dim_match = dim_match
+        self.features = nn.HybridSequential()
+        self.bn1 = nn.BatchNorm(use_global_stats=use_global_stats,  prefix=prefix + '_nb1_')
+        self.act1 = nn.Activation('relu')
+
+        self.scale = nn.Conv2D(channels=num_filter, kernel_size=(1, 1), strides=stride, use_bias=False,
+                               prefix=prefix + '_sc_')
+        if isBin:
+            self.features.add(nn.QConv2D(channels=int(num_filter * 0.25), kernel_size=(1, 1), strides=(1, 1), padding=(0, 0),
+                                        use_bias=False, apply_scaling=True, prefix=prefix + '_conv1_'))
+            self.features.add(nn.BatchNorm(use_global_stats=use_global_stats, prefix=prefix + '_nb2_'))
+            self.features.add(nn.Activation('relu'))
+            self.features.add(nn.QConv2D(channels=int(num_filter * 0.25), kernel_size=(3, 3), strides=stride, padding=(1, 1),
+                                        use_bias=False, apply_scaling=True, prefix=prefix + '_conv2_'))
+            self.features.add(nn.BatchNorm(use_global_stats=use_global_stats, prefix=prefix + '_nb3_'))
+            self.features.add(nn.Activation('relu'))
+            self.features.add(nn.QConv2D(channels=num_filter, kernel_size=(1, 1), strides=(1, 1), padding=(0, 0),
+                                        use_bias=False, apply_scaling=True, prefix=prefix + '_conv3_'))
+        else:
+            self.features.add(nn.Conv2D(channels=int(num_filter * 0.25), kernel_size=(1, 1), strides=(1, 1), padding=(0, 0),
+                                        use_bias=False, prefix=prefix + '_conv1_'))
+            self.features.add(nn.BatchNorm(use_global_stats=use_global_stats, prefix=prefix + '_nb2_'))
+            self.features.add(nn.Activation('relu'))
+            self.features.add(nn.Conv2D(channels=int(num_filter * 0.25), kernel_size=(3, 3), strides=stride, padding=(1, 1),
+                                        use_bias=False, prefix=prefix + '_conv2_'))
+            self.features.add(nn.BatchNorm(use_global_stats=use_global_stats, prefix=prefix + '_nb3_'))
+            self.features.add(nn.Activation('relu'))
+            self.features.add(nn.Conv2D(channels=num_filter, kernel_size=(1, 1), strides=(1, 1), padding=(0, 0),
+                                        use_bias=False, prefix=prefix + '_conv3_'))
+
+    def hybrid_forward(self, F, x, *args, **kwargs):
+        if self.dim_match:
+            shortcut = x
+        else:
+            shortcut = self.scale(x)
+
+        feat = self.features(x)
+        return feat + shortcut
+
+step_res_101_spec = {
+    0: [],
+    1: [],
+    2: [],
+    3: [],
+    4: [],
+    5: []
+}
 def get_resnet_feature(data, units, filter_list):
     # res1
     data_bn = mx.sym.BatchNorm(data=data, fix_gamma=True, eps=eps, use_global_stats=use_global_stats, name='bn_data')
@@ -38,19 +108,30 @@ def get_resnet_feature(data, units, filter_list):
     pool0 = mx.symbol.Pooling(data=relu0, kernel=(3, 3), stride=(2, 2), pad=(1, 1), pool_type='max', name='pool0')
 
     # res2
-    unit = residual_unit(data=pool0, num_filter=filter_list[0], stride=(1, 1), dim_match=False, name='stage1_unit1')
+    unit = residual_unit(data=pool0, num_filter=filter_list[0], stride=(1, 1), dim_match=False,
+                         name='stage1_unit1', isBin=True)
     for i in range(2, units[0] + 1):
-        unit = residual_unit(data=unit, num_filter=filter_list[0], stride=(1, 1), dim_match=True, name='stage1_unit%s' % i)
+        unit = residual_unit(data=unit, num_filter=filter_list[0], stride=(1, 1), dim_match=True,
+                             name='stage1_unit%s' % i, isBin=True)
 
     # res3
-    unit = residual_unit(data=unit, num_filter=filter_list[1], stride=(2, 2), dim_match=False, name='stage2_unit1')
+    unit = residual_unit(data=unit, num_filter=filter_list[1], stride=(2, 2), dim_match=False, name='stage2_unit1',
+                         isBin=True)
     for i in range(2, units[1] + 1):
-        unit = residual_unit(data=unit, num_filter=filter_list[1], stride=(1, 1), dim_match=True, name='stage2_unit%s' % i)
+        unit = residual_unit(data=unit, num_filter=filter_list[1], stride=(1, 1), dim_match=True,
+
+                             name='stage2_unit%s' % i, isBin=True)
 
     # res4
-    unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(2, 2), dim_match=False, name='stage3_unit1')
-    for i in range(2, units[2] + 1):
-        unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(1, 1), dim_match=True, name='stage3_unit%s' % i)
+    unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(2, 2), dim_match=False, name='stage3_unit1',
+                         isBin=True)
+    for i in range(2, (units[2] + 1)//2):
+        unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(1, 1), dim_match=True, name='stage3_unit%s' % i,
+                             isBin=True)
+
+    for i in range((units[2] + 1)//2, units[2] + 1):
+        unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(1, 1), dim_match=True, name='stage3_unit%s' % i,
+                             isBin=True)
     return unit
 
 

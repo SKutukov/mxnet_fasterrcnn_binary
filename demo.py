@@ -9,25 +9,18 @@ from symdata.bbox import im_detect
 from symdata.loader import load_test, generate_batch
 from symdata.vis import vis_detection
 from symnet.model import load_param, check_shape
-
+import os
+import tqdm
 
 def demo_net(sym, class_names, args):
     # print config
-    print('called with args\n{}'.format(pprint.pformat(vars(args))))
-
     # setup context
     if args.gpu:
         ctx = mx.gpu(int(args.gpu))
     else:
         ctx = mx.cpu(0)
 
-    # load single test
-    im_tensor, im_info, im_orig = load_test(args.image, short=args.img_short_side, max_size=args.img_long_side,
-                                            mean=args.img_pixel_means, std=args.img_pixel_stds)
-
-    # generate data batch
-    data_batch = generate_batch(im_tensor, im_info)
-
+    print('called with args\n{}'.format(pprint.pformat(vars(args))))
     # load params
     arg_params, aux_params = load_param(args.params, ctx=ctx)
 
@@ -45,27 +38,37 @@ def demo_net(sym, class_names, args):
     mod.bind(data_shapes, label_shapes, for_training=False)
     mod.init_params(arg_params=arg_params, aux_params=aux_params)
 
-    # forward
-    mod.forward(data_batch)
-    rois, scores, bbox_deltas = mod.get_outputs()
-    rois = rois[:, 1:]
-    scores = scores[0]
-    bbox_deltas = bbox_deltas[0]
-    im_info = im_info[0]
+    f = open("/home/skutukov/datasets/VOCdevkit/VOC2007/ImageSets/Main/test.txt", "r")
+    for file in tqdm.tqdm(f.readlines()):
+        path = os.path.join(args.image, str(file).strip() + '.jpg')
 
-    # decode detection
-    det = im_detect(rois, scores, bbox_deltas, im_info,
-                    bbox_stds=args.rcnn_bbox_stds, nms_thresh=args.rcnn_nms_thresh,
-                    conf_thresh=args.rcnn_conf_thresh)
+        # load single test
+        im_tensor, im_info, im_orig = load_test(path, short=args.img_short_side, max_size=args.img_long_side,
+                                                mean=args.img_pixel_means, std=args.img_pixel_stds)
 
-    # print out
-    for [cls, conf, x1, y1, x2, y2] in det:
-        if cls > 0 and conf > args.vis_thresh:
-            print(class_names[int(cls)], conf, [x1, y1, x2, y2])
+        # generate data batch
+        data_batch = generate_batch(im_tensor, im_info)
+        # forward
+        mod.forward(data_batch)
+        rois, scores, bbox_deltas = mod.get_outputs()
+        rois = rois[:, 1:]
+        scores = scores[0]
+        bbox_deltas = bbox_deltas[0]
+        im_info = im_info[0]
 
-    # if vis
-    if args.vis:
-        vis_detection(im_orig, det, class_names, thresh=args.vis_thresh)
+        # decode detection
+        det = im_detect(rois, scores, bbox_deltas, im_info,
+                        bbox_stds=args.rcnn_bbox_stds, nms_thresh=args.rcnn_nms_thresh,
+                        conf_thresh=args.rcnn_conf_thresh)
+
+        # print out
+        for [cls, conf, x1, y1, x2, y2] in det:
+            if cls > 0 and conf > args.vis_thresh:
+                print(class_names[int(cls)], conf, [x1, y1, x2, y2])
+
+        # if vis
+        if args.vis:
+            vis_detection(im_orig, det, class_names, thresh=args.vis_thresh, file=file)
 
 
 def parse_args():
@@ -135,7 +138,7 @@ def get_vgg16_test(args):
                         rpn_min_size=args.rpn_min_size,
                         num_classes=args.rcnn_num_classes, rcnn_feature_stride=args.rcnn_feat_stride,
                         rcnn_pooled_size=args.rcnn_pooled_size, rcnn_batch_size=args.rcnn_batch_size,
-                        isBin=True, step=4)
+                        isBin=False, step=0)
 
 
 def get_resnet50_test(args):

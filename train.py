@@ -1,6 +1,7 @@
 import argparse
 import ast
 import pprint
+import logging
 
 import mxnet as mx
 from mxnet.module import Module
@@ -11,6 +12,7 @@ from symnet.model import load_param, infer_data_shape, check_shape, initialize_f
 from symnet.metric import RPNAccMetric, RPNLogLossMetric, RPNL1LossMetric, RCNNAccMetric, RCNNLogLossMetric, RCNNL1LossMetric
 
 def train_net(sym, roidb, args):
+    logger.addHandler(logging.FileHandler("{0}/{1}".format(args.save_prefix, 'train.log')))
     # print config
     logger.info('called with args\n{}'.format(pprint.pformat(vars(args))))
     # setup multi-gpu
@@ -48,10 +50,11 @@ def train_net(sym, roidb, args):
     # load and initialize params
     if args.resume:
         arg_params, aux_params = load_param(args.resume)
+        # arg_params, aux_params = initialize_bias(sym, data_shapes, arg_params, aux_params)
     else:
         arg_params, aux_params = load_param(args.pretrained)
         arg_params, aux_params = initialize_frcnn(sym, data_shapes, arg_params, aux_params)
-        arg_params, aux_params = initialize_bias(sym, data_shapes, arg_params, aux_params)
+        # arg_params, aux_params = initialize_bias(sym, data_shapes, arg_params, aux_params)
     # check parameter shapes
     check_shape(sym, data_shapes + label_shapes, arg_params, aux_params)
 
@@ -87,7 +90,7 @@ def train_net(sym, roidb, args):
     optimizer_params = {'momentum': 0.9,
                         'wd': 0.0005,
                         'learning_rate': lr,
-                        # 'lr_scheduler': lr_scheduler,
+                        'lr_scheduler': lr_scheduler,
                         'rescale_grad': (1.0 / batch_size),
                         'clip_gradient': 5}
 
@@ -197,12 +200,12 @@ def get_vgg16_train(args):
     args.img_pixel_means = (123.68, 116.779, 103.939)
     args.img_pixel_stds = (1.0, 1.0, 1.0)
     # args.net_fixed_params = ['vgg0_conv0_', 'vgg0_conv1_']
-    # args.net_fixed_params = ['vgg0_conv0_', 'vgg0_conv7', 'vgg0_conv8', 'vgg0_conv9']
+    args.net_fixed_params = ['vgg0_conv0_', 'vgg0_conv7', 'vgg0_conv8', 'vgg0_conv9']
     # args.net_fixed_params = ['vgg0_conv0_', 'vgg0_qconv0', 'vgg0_qconv1', 'vgg0_qconv2',
     #                          'vgg0_qconv3', 'vgg0_qconv4', 'vgg0_qconv5',
     #                          'vgg0_qconv6', 'vgg0_qconv7', 'vgg0_qconv8']
-    args.net_fixed_params = ['vgg0_conv0_', 'vgg0_qconv0', 'vgg0_qconv1', 'vgg0_qconv2',
-                             'vgg0_qconv3', 'vgg0_qconv4', 'vgg0_qconv5']
+    # args.net_fixed_params = ['vgg0_conv0_', 'vgg0_qconv0', 'vgg0_qconv1', 'vgg0_qconv2',
+    #                          'vgg0_qconv3', 'vgg0_qconv4', 'vgg0_qconv5']
     # args.net_fixed_params = ['vgg0_conv0', 'vgg0_qconv']
     args.rpn_feat_stride = 16
     args.rcnn_feat_stride = 16
@@ -226,7 +229,9 @@ def get_resnet50_train(args):
         args.save_prefix = 'model/resnet50'
     args.img_pixel_means = (0.0, 0.0, 0.0)
     args.img_pixel_stds = (1.0, 1.0, 1.0)
-    args.net_fixed_params = ['conv0', 'stage1', 'gamma', 'beta']
+    # args.net_fixed_params = ['conv0', 'stage1', 'gamma', 'beta']
+    args.net_fixed_params = ['conv0', 'stage1', 'stage2', 'gamma', 'beta']
+
     args.rpn_feat_stride = 16
     args.rcnn_feat_stride = 16
     args.rcnn_pooled_size = (14, 14)
@@ -249,7 +254,12 @@ def get_resnet101_train(args):
         args.save_prefix = 'model/resnet101'
     args.img_pixel_means = (0.0, 0.0, 0.0)
     args.img_pixel_stds = (1.0, 1.0, 1.0)
-    args.net_fixed_params = ['conv0', 'stage1', 'gamma', 'beta']
+    args.net_fixed_params = ['conv0', 'stage1', 'stage2', 'gamma', 'beta']
+
+    #stage 3
+    for i in range(2, 13):
+        args.net_fixed_params.append('stage3_unit%s' % i)
+
     args.rpn_feat_stride = 16
     args.rcnn_feat_stride = 16
     args.rcnn_pooled_size = (14, 14)
