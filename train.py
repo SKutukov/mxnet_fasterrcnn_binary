@@ -1,6 +1,7 @@
 import argparse
 import ast
 import pprint
+import logging
 
 import mxnet as mx
 from mxnet.module import Module
@@ -11,6 +12,7 @@ from symnet.model import load_param, infer_data_shape, check_shape, initialize_f
 from symnet.metric import RPNAccMetric, RPNLogLossMetric, RPNL1LossMetric, RCNNAccMetric, RCNNLogLossMetric, RCNNL1LossMetric
 
 def train_net(sym, roidb, args):
+    logger.addHandler(logging.FileHandler("{0}/{1}".format(args.save_prefix, 'train.log')))
     # print config
     logger.info('called with args\n{}'.format(pprint.pformat(vars(args))))
     # setup multi-gpu
@@ -87,7 +89,7 @@ def train_net(sym, roidb, args):
     # optimizer
     optimizer_params = {'momentum': 0.9,
                         'wd': 0.0005,
-                        'learning_rate': base_lr,
+                        'learning_rate': lr,
                         'lr_scheduler': lr_scheduler,
                         'rescale_grad': (1.0 / batch_size),
                         'clip_gradient': 5}
@@ -227,7 +229,7 @@ def get_resnet50_train(args):
         args.save_prefix = 'model/resnet50'
     args.img_pixel_means = (0.0, 0.0, 0.0)
     args.img_pixel_stds = (1.0, 1.0, 1.0)
-    args.net_fixed_params = ['conv0', 'stage1', 'gamma', 'beta']
+    # args.net_fixed_params = ['conv0', 'stage1', 'gamma', 'beta']
     args.net_fixed_params = ['conv0', 'stage1', 'stage2', 'gamma', 'beta']
 
     args.rpn_feat_stride = 16
@@ -253,6 +255,11 @@ def get_resnet101_train(args):
     args.img_pixel_means = (0.0, 0.0, 0.0)
     args.img_pixel_stds = (1.0, 1.0, 1.0)
     args.net_fixed_params = ['conv0', 'stage1', 'stage2', 'gamma', 'beta']
+
+    #stage 3
+    for i in range(2, 13):
+        args.net_fixed_params.append('stage3_unit%s' % i)
+
     args.rpn_feat_stride = 16
     args.rcnn_feat_stride = 16
     args.rcnn_pooled_size = (14, 14)

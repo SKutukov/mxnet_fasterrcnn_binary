@@ -90,6 +90,14 @@ class ResidualUnit(nn.HybridBlock):
         feat = self.features(x)
         return feat + shortcut
 
+step_res_101_spec = {
+    0: [],
+    1: [],
+    2: [],
+    3: [],
+    4: [],
+    5: []
+}
 def get_resnet_feature(data, units, filter_list):
     # res1
     data_bn = mx.sym.BatchNorm(data=data, fix_gamma=True, eps=eps, use_global_stats=use_global_stats, name='bn_data')
@@ -117,7 +125,11 @@ def get_resnet_feature(data, units, filter_list):
     # res4
     unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(2, 2), dim_match=False, name='stage3_unit1',
                          isBin=True)
-    for i in range(2, units[2] + 1):
+    for i in range(2, (units[2] + 1)//2):
+        unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(1, 1), dim_match=True, name='stage3_unit%s' % i,
+                             isBin=True)
+
+    for i in range((units[2] + 1)//2, units[2] + 1):
         unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(1, 1), dim_match=True, name='stage3_unit%s' % i,
                              isBin=True)
     return unit

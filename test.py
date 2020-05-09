@@ -12,8 +12,11 @@ from symdata.loader import TestLoader
 from symnet.logger import logger
 from symnet.model import load_param, check_shape
 from symdata.vis import vis_detection
+import logging
+
 
 def test_net(sym, imdb, args):
+    logger.addHandler(logging.FileHandler("{0}/{1}".format(args.prefix, 'test.log')))
     # print config
     logger.info('called with args\n{}'.format(pprint.pformat(vars(args))))
 
@@ -100,6 +103,7 @@ def parse_args():
     parser.add_argument('--rcnn-conf-thresh', type=float, default=1e-3)
     parser.add_argument('--is_bin', action='store_true', default=False)
     parser.add_argument('--step', type=int, default=1)
+    parser.add_argument('--prefix', type=str)
     args = parser.parse_args()
     args.img_pixel_means = ast.literal_eval(args.img_pixel_means)
     args.img_pixel_stds = ast.literal_eval(args.img_pixel_stds)

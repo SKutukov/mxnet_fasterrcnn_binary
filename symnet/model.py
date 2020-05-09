@@ -1,6 +1,5 @@
 import mxnet as mx
 
-<<<<<<< HEAD
 weight_map = {
         'conv1_1_weight': 'vgg0_conv0_weight',
         'conv1_1_bias': 'vgg0_conv0_bias',
