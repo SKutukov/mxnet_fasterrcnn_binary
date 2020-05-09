@@ -27,7 +27,7 @@ def save(ctx, args):
     test_count = 1000
 
     # Training loop would be here
-    RES_FILENAME = "res_%s.txt" % args.block_part
+    RES_FILENAME = "res.txt"
     if args.part == 1:
         with open(RES_FILENAME, 'w') as res_file:
 
