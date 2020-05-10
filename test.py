@@ -87,9 +87,6 @@ def parse_args():
     # faster rcnn params
     parser.add_argument('--img-short-side', type=int, default=600)
     parser.add_argument('--img-long-side', type=int, default=1000)
-    parser.add_argument('--img-pixel-means', type=str, default='(0.0, 0.0, 0.0)')
-    parser.add_argument('--img-pixel-stds', type=str, default='(1.0, 1.0, 1.0)')
-    parser.add_argument('--rpn-feat-stride', type=int, default=16)
     parser.add_argument('--rpn-anchor-scales', type=str, default='(8, 16, 32)')
     parser.add_argument('--rpn-anchor-ratios', type=str, default='(0.5, 1, 2)')
     parser.add_argument('--rpn-pre-nms-topk', type=int, default=6000)
@@ -97,8 +94,6 @@ def parse_args():
     parser.add_argument('--rpn-nms-thresh', type=float, default=0.7)
     parser.add_argument('--rpn-min-size', type=int, default=16)
     parser.add_argument('--rcnn-num-classes', type=int, default=21)
-    parser.add_argument('--rcnn-feat-stride', type=int, default=16)
-    parser.add_argument('--rcnn-pooled-size', type=str, default='(14, 14)')
     parser.add_argument('--rcnn-batch-size', type=int, default=1)
     parser.add_argument('--rcnn-bbox-stds', type=str, default='(0.1, 0.1, 0.2, 0.2)')
     parser.add_argument('--rcnn-nms-thresh', type=float, default=0.3)

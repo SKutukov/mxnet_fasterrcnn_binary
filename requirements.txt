@@ -1,3 +1,4 @@
 opencv-python
 gluoncv
 opencv-contrib-python
+PyYAML
