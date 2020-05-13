@@ -27,7 +27,8 @@ def save(ctx, args):
     test_count = 1000
 
     # Training loop would be here
-    RES_FILENAME = "res.txt"
+    RES_FILENAME = "log.txt"
+    SPEEDUP_FILENAME = "speed.csv"
     if args.part == 1:
         with open(RES_FILENAME, 'w') as res_file:
 
@@ -55,7 +56,9 @@ def save(ctx, args):
 
     # output = subprocess.check_output(["/home/skutukov/work/BMXNet-v2/build/tools/binary_converter/model-converter", param_file])
 
-    with open(RES_FILENAME, 'a') as res_file:
+    with open(RES_FILENAME, 'a') as res_file, \
+         open(SPEEDUP_FILENAME, 'a') as CSV_file:
+
 
         if args.part == 2:
 
@@ -84,6 +87,7 @@ def save(ctx, args):
             print("speed up : %f" % (float(dt1) / dt2))
             res_file.write("time_final_compressed: %f\n" % dt2)
             res_file.write("speed_up: %f\n" % (float(dt1) / dt2))
+            CSV_file.write(str((float(dt1) / dt2)) + '\n')
 
 
     # assert_almost_equal(expected.asnumpy(), out1.asnumpy())
