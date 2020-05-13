@@ -1,6 +1,6 @@
 import mxnet as mx
 
-weight_map = {
+weight_map_0 = {
         'conv1_1_weight': 'vgg0_conv0_weight',
         'conv1_1_bias': 'vgg0_conv0_bias',
         'conv1_2_weight': 'vgg0_conv1_weight',
@@ -161,6 +161,12 @@ weight_map_4 = {
     'fc7_bias': 'vgg1_dense0_bias',
 }
 
+weight_map_5 = {
+    'fc6_weight': 'vgg1_dense0_weight',
+    'fc6_bias': 'vgg1_dense0_bias',
+    'fc7_weight': 'vgg1_dense1_weight',
+    'fc7_bias': 'vgg1_dense1_bias',
+}
 weight_map_res = {}
 
 def load_param(params, ctx=None, weight_map=None):
@@ -173,8 +179,8 @@ def load_param(params, ctx=None, weight_map=None):
     for k, v in save_dict.items():
         tp, name = k.split(':', 1)
 
-        # if name in weight_map.keys():
-        #     name = weight_map[name]
+        # if name in weight_map_5.keys():
+        #     name = weight_map_5[name]
         if weight_map is not None:
             if name in weight_map.keys():
                 name = weight_map[name]

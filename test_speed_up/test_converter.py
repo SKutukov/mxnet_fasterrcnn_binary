@@ -1,11 +1,6 @@
 import pytest
 import mxnet as mx
-import subprocess
-from os.path import abspath
-
-from mxnet import gluon
-from mxnet.gluon import nn
-from numpy.testing import assert_almost_equal
+from mxnet import autograd
 import argparse
 import time
 from symdata.loader import load_test, generate_batch
@@ -47,7 +42,9 @@ def save(ctx, args):
             # Intermediate symbolic model, non-compressed
             star_time = time.time()
             for i in range(0, test_count):
-                _ = orig_net(data_batch[0], data_batch[1])
+                with autograd.predict_mode():
+                    _ = orig_net(data_batch[0], data_batch[1])
+
 
             dt1 = (time.time() - star_time)/test_count
 
@@ -79,7 +76,8 @@ def save(ctx, args):
             # Intermediate symbolic model, non-compressed
             star_time = time.time()
             for i in range(0, test_count):
-                _ = orig_net(data_batch[0], data_batch[1])
+                with autograd.predict_mode():
+                    _ = orig_net(data_batch[0], data_batch[1])
 
             dt2 = (time.time() - star_time) / test_count
 
