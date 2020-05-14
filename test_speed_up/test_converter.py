@@ -1,11 +1,6 @@
 import pytest
 import mxnet as mx
-import subprocess
-from os.path import abspath
-
-from mxnet import gluon
-from mxnet.gluon import nn
-from numpy.testing import assert_almost_equal
+from mxnet import autograd
 import argparse
 import time
 from symdata.loader import load_test, generate_batch
@@ -27,7 +22,8 @@ def save(ctx, args):
     test_count = 1000
 
     # Training loop would be here
-    RES_FILENAME = "res_%s.txt" % args.block_part
+    RES_FILENAME = "log.txt"
+    SPEEDUP_FILENAME = "speed.csv"
     if args.part == 1:
         with open(RES_FILENAME, 'w') as res_file:
 
@@ -46,7 +42,9 @@ def save(ctx, args):
             # Intermediate symbolic model, non-compressed
             star_time = time.time()
             for i in range(0, test_count):
-                _ = orig_net(data_batch[0], data_batch[1])
+                with autograd.predict_mode():
+                    _ = orig_net(data_batch[0], data_batch[1])
+
 
             dt1 = (time.time() - star_time)/test_count
 
@@ -55,7 +53,9 @@ def save(ctx, args):
 
     # output = subprocess.check_output(["/home/skutukov/work/BMXNet-v2/build/tools/binary_converter/model-converter", param_file])
 
-    with open(RES_FILENAME, 'a') as res_file:
+    with open(RES_FILENAME, 'a') as res_file, \
+         open(SPEEDUP_FILENAME, 'a') as CSV_file:
+
 
         if args.part == 2:
 
@@ -76,7 +76,8 @@ def save(ctx, args):
             # Intermediate symbolic model, non-compressed
             star_time = time.time()
             for i in range(0, test_count):
-                _ = orig_net(data_batch[0], data_batch[1])
+                with autograd.predict_mode():
+                    _ = orig_net(data_batch[0], data_batch[1])
 
             dt2 = (time.time() - star_time) / test_count
 
@@ -84,6 +85,7 @@ def save(ctx, args):
             print("speed up : %f" % (float(dt1) / dt2))
             res_file.write("time_final_compressed: %f\n" % dt2)
             res_file.write("speed_up: %f\n" % (float(dt1) / dt2))
+            CSV_file.write(str((float(dt1) / dt2)) + '\n')
 
 
     # assert_almost_equal(expected.asnumpy(), out1.asnumpy())
