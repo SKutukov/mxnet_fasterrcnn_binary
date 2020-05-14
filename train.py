@@ -256,9 +256,6 @@ def get_resnet101_train(args):
     args.img_pixel_stds = (1.0, 1.0, 1.0)
     args.net_fixed_params = ['conv0', 'stage1', 'stage2', 'gamma', 'beta']
 
-    #stage 3
-    for i in range(2, 13):
-        args.net_fixed_params.append('stage3_unit%s' % i)
 
     args.rpn_feat_stride = 16
     args.rcnn_feat_stride = 16
