@@ -15,8 +15,9 @@ from datasets.voc import get_voc_train
 from datasets.coco import get_coco_train
 
 from symnet.factory import get_network
+from tools.config import Config
 
-def train_net(sym, roidb, args):
+def train_net(sym, roidb, args, config):
     logger.addHandler(logging.FileHandler("{0}/{1}".format(args.save_prefix, 'train.log')))
     # print config
     logger.info('called with args\n{}'.format(pprint.pformat(vars(args))))
@@ -24,20 +25,22 @@ def train_net(sym, roidb, args):
     ctx = [mx.gpu(int(i)) for i in args.gpus.split(',')]
     batch_size = args.rcnn_batch_size * len(ctx)
 
+    # config = Config('configs/vgg_step_{}.yml'.format(args.step))
     # load training data
     feat_sym = sym.get_internals()['rpn_cls_score_output']
-    ag = AnchorGenerator(feat_stride=args.rpn_feat_stride,
-                         anchor_scales=args.rpn_anchor_scales, anchor_ratios=args.rpn_anchor_ratios)
+    ag = AnchorGenerator(feat_stride=config.rpn['rpn_feat_stride'],
+                         anchor_scales=config.rpn['rpn_anchor_scales'], anchor_ratios=config.rpn['rpn_anchor_ratios'])
     asp = AnchorSampler(allowed_border=args.rpn_allowed_border, batch_rois=args.rpn_batch_rois,
-                        fg_fraction=args.rpn_fg_fraction, fg_overlap=args.rpn_fg_overlap,
-                        bg_overlap=args.rpn_bg_overlap)
+                        fg_fraction=config.rpn['rpn_fg_fraction'], fg_overlap=config.rpn['rpn_fg_overlap'],
+                        bg_overlap=config.rpn['rpn_bg_overlap'])
     train_data = AnchorLoader(roidb, batch_size, args.img_short_side, args.img_long_side,
-                              args.img_pixel_means, args.img_pixel_stds, feat_sym, ag, asp, shuffle=True)
+                              config.transform['img_pixel_means'],
+                              config.transform['img_pixel_stds'], feat_sym, ag, asp, shuffle=True)
 
     # produce shape max possible
     _, out_shape, _ = feat_sym.infer_shape(data=(1, 3, args.img_long_side, args.img_long_side))
     feat_height, feat_width = out_shape[0][-2:]
-    rpn_num_anchors = len(args.rpn_anchor_scales) * len(args.rpn_anchor_ratios)
+    rpn_num_anchors = len(config.rpn['rpn_anchor_scales']) * len(config.rpn['rpn_anchor_ratios'])
     data_names = ['data', 'im_info', 'gt_boxes']
     label_names = ['label', 'bbox_target', 'bbox_weight']
     data_shapes = [('data', (batch_size, 3, args.img_long_side, args.img_long_side)),
@@ -64,7 +67,7 @@ def train_net(sym, roidb, args):
     check_shape(sym, data_shapes + label_shapes, arg_params, aux_params)
 
     # check fixed params
-    fixed_param_names = get_fixed_params(sym, args.net_fixed_params)
+    fixed_param_names = get_fixed_params(sym, config.train_param['net_fixed_params'])
     logger.info('locking params\n%s' % pprint.pformat(fixed_param_names))
 
     # metric
@@ -127,35 +130,14 @@ def parse_args():
     # faster rcnn params
     parser.add_argument('--img-short-side', type=int, default=600)
     parser.add_argument('--img-long-side', type=int, default=1000)
-    parser.add_argument('--net-fixed-params', type=str, default='["conv0", "stage1", "gamma", "beta"]')
-    parser.add_argument('--rpn-anchor-scales', type=str, default='(8, 16, 32)')
-    parser.add_argument('--rpn-anchor-ratios', type=str, default='(0.5, 1, 2)')
-    parser.add_argument('--rpn-pre-nms-topk', type=int, default=12000)
-    parser.add_argument('--rpn-post-nms-topk', type=int, default=2000)
-    parser.add_argument('--rpn-nms-thresh', type=float, default=0.7)
-    parser.add_argument('--rpn-min-size', type=int, default=16)
     parser.add_argument('--rpn-batch-rois', type=int, default=256)
     parser.add_argument('--rpn-allowed-border', type=int, default=0)
-    parser.add_argument('--rpn-fg-fraction', type=float, default=0.5)
-    parser.add_argument('--rpn-fg-overlap', type=float, default=0.7)
-    parser.add_argument('--rpn-bg-overlap', type=float, default=0.3)
-    parser.add_argument('--rcnn-num-classes', type=int, default=21)
     parser.add_argument('--rcnn-batch-size', type=int, default=1)
     parser.add_argument('--rcnn-batch-rois', type=int, default=128)
-    parser.add_argument('--rcnn-fg-fraction', type=float, default=0.25)
-    parser.add_argument('--rcnn-fg-overlap', type=float, default=0.5)
-    parser.add_argument('--rcnn-bbox-stds', type=str, default='(0.1, 0.1, 0.2, 0.2)')
-    parser.add_argument('--is_bin', action='store_true', default=False)
     parser.add_argument('--step', type=int, default=1)
+    parser.add_argument('--config_filename', type=str)
 
     args = parser.parse_args()
-    args.img_pixel_means = ast.literal_eval(args.img_pixel_means)
-    args.img_pixel_stds = ast.literal_eval(args.img_pixel_stds)
-    args.net_fixed_params = ast.literal_eval(args.net_fixed_params)
-    args.rpn_anchor_scales = ast.literal_eval(args.rpn_anchor_scales)
-    args.rpn_anchor_ratios = ast.literal_eval(args.rpn_anchor_ratios)
-    args.rcnn_pooled_size = ast.literal_eval(args.rcnn_pooled_size)
-    args.rcnn_bbox_stds = ast.literal_eval(args.rcnn_bbox_stds)
     return args
 
 
@@ -174,9 +156,10 @@ def main():
     if not os.path.isdir(args.save_prefix):
         os.makedirs(args.save_prefix)
 
+    config = Config(args.config_filename)
     roidb = get_dataset(args.dataset, args)
-    sym = get_network(args.network, args, 'train')
-    train_net(sym, roidb, args)
+    sym = get_network(args.network, args, config, 'train')
+    train_net(sym, roidb, args, config)
 
 
 if __name__ == '__main__':

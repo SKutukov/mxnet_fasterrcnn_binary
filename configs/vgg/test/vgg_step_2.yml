@@ -1,7 +1,16 @@
 rpn:
   rpn_feat_stride: 16
+  rpn_anchor_scales: !!python/tuple [8, 16, 32]
+  rpn_anchor_ratios: !!python/tuple [0.5, 1, 2]
+  rpn_pre_nms_topk: 6000
+  rpn_post_nms_topk: 300
+  rpn_min_size: 16
+  rpn_nms_thresh: 0.7
+
+rcnn:
   rcnn_feat_stride: 16
   rcnn_pooled_size: !!python/tuple [7, 7]
+  rcnn_num_classes: 21
 
 train_param:
   net_fixed_params: ['vgg0_conv0_', 'vgg0_qconv0', 'vgg0_qconv1', 'vgg0_qconv2']

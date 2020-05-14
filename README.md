@@ -57,17 +57,14 @@ Different network has different configuration. Different dataset has different o
 Make a directory `data` and follow `py-faster-rcnn` for data preparation instructions.
 * [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) should be in `data/VOCdevkit` containing `VOC2007`, `VOC2012` and `annotations`.
 
+### Training and evaluation faster-rcnn-vgg16
+```bash
+$ bash scripts/run_train_faster_rcnn_qvgg.sh $STEP
+```
 
-### Download pretrained ImageNet models
-* [VGG16](http://www.robots.ox.ac.uk/~vgg/research/very_deep/) should be at `model/vgg16-0000.params` from [MXNet model zoo](http://data.dmlc.ml/models/imagenet/vgg/).
-* [ResNet](https://github.com/tornadomeet/ResNet) should be at `model/resnet-101-0000.params` from [MXNet model zoo](http://data.dmlc.ml/models/imagenet/resnet/).
-
-### Training and evaluation
-Use `python3 train.py --dataset $Dataset$ --network $Network$ --pretrained $IMAGENET_MODEL_FILE$ --gpus $GPUS$` to train,
-for example, `python3 train.py --dataset voc --network vgg16 --pretrained model/vgg16-0000.params --gpus 0,1`.
-Use `python3 test.py --dataset $Dataset$ --network $Network$ --params $MODEL_FILE$ --gpu $GPU$` to evaluate,
-for example, `python3 test.py --dataset voc --network vgg16 --params model/vgg16-0010.params --gpu 0`.
-
+```bash
+$ bash scripts/run_test_faster_rcnn_qvgg.sh $STEP
+```
 ### Test speed
 1. Download weight to some dir
 2.  run script
