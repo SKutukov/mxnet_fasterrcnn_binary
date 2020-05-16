@@ -7,6 +7,7 @@ class Config:
             temp_dict = yaml.load(f.read())
 
         self.rpn = temp_dict['rpn']
+        self.rcnn = temp_dict['rcnn']
         self.train_param = temp_dict['train_param']
         self.transform = temp_dict['transform']
 

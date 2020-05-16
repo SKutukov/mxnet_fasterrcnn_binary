@@ -1,0 +1,27 @@
+rpn:
+  rpn_feat_stride: 16
+  rpn_anchor_scales: !!python/tuple [8, 16, 32]
+  rpn_anchor_ratios: !!python/tuple [0.5, 1, 2]
+  rpn_pre_nms_topk: 12000
+  rpn_post_nms_topk: 2000
+  rpn_min_size: 16
+  rpn_nms_thresh: 0.7
+  rpn_fg_overlap: 0.7
+  rpn_fg_fraction: 0.5
+  rpn_bg_overlap: 0.3
+
+rcnn:
+  rcnn_feat_stride: 16
+  rcnn_pooled_size: !!python/tuple [7, 7]
+  rcnn_num_classes: 21
+  rcnn_bbox_stds: !!python/tuple [0.1, 0.1, 0.2, 0.2]
+  rcnn_fg_fraction: 0.25
+  rcnn_fg_overlap: 0.5
+
+train_param:
+  net_fixed_params: ['vgg0_conv0_', 'vgg0_conv7', 'vgg0_conv8', 'vgg0_conv9']
+  is_rcnn_top_bin: False
+
+transform:
+  img_pixel_means: !!python/tuple [123.68, 116.779, 103.939]
+  img_pixel_stds: !!python/tuple [1.0, 1.0, 1.0]

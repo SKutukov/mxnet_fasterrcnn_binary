@@ -12,7 +12,8 @@ step_spec = {
     1: (0,) + tuple(range(4, 13)),
     2: (0,) + tuple(range(7, 13)),
     3: (0,) + tuple(range(10, 13)),
-    4: (0,)
+    4: (0,),
+    5: (0,)
 }
 class VGG(nn.HybridBlock):
     def __init__(self, layers, filters, classes=1000, batch_norm=False, isBin=False, step=0, **kwargs):

@@ -6,18 +6,19 @@ import mxnet as mx
 from mxnet.module import Module
 import numpy as np
 from tqdm import tqdm
-
+from tools.config import Config
 from symdata.bbox import im_detect
 from symdata.loader import TestLoader
 from symnet.logger import logger
 from symnet.model import load_param, check_shape
 from symdata.vis import vis_detection
 import logging
-from datasets.coco import get_coco_test
 from datasets.voc import get_voc_test
+from datasets.coco import get_coco_test
 from symnet.factory import get_network
 
-def test_net(sym, imdb, args):
+
+def test_net(sym, imdb, args, config):
     logger.addHandler(logging.FileHandler("{0}/{1}".format(args.prefix, 'test.log')))
     # print config
     logger.info('called with args\n{}'.format(pprint.pformat(vars(args))))
@@ -27,7 +28,7 @@ def test_net(sym, imdb, args):
 
     # load testing data
     test_data = TestLoader(imdb.roidb, batch_size=1, short=args.img_short_side, max_size=args.img_long_side,
-                           mean=args.img_pixel_means, std=args.img_pixel_stds)
+                           mean=config.transform['img_pixel_means'], std=config.transform['img_pixel_stds'])
 
     # load params
     arg_params, aux_params = load_param(args.params, ctx=ctx)
@@ -87,29 +88,16 @@ def parse_args():
     # faster rcnn params
     parser.add_argument('--img-short-side', type=int, default=600)
     parser.add_argument('--img-long-side', type=int, default=1000)
-    parser.add_argument('--rpn-anchor-scales', type=str, default='(8, 16, 32)')
-    parser.add_argument('--rpn-anchor-ratios', type=str, default='(0.5, 1, 2)')
-    parser.add_argument('--rpn-pre-nms-topk', type=int, default=6000)
-    parser.add_argument('--rpn-post-nms-topk', type=int, default=300)
-    parser.add_argument('--rpn-nms-thresh', type=float, default=0.7)
-    parser.add_argument('--rpn-min-size', type=int, default=16)
-    parser.add_argument('--rcnn-num-classes', type=int, default=21)
     parser.add_argument('--rcnn-batch-size', type=int, default=1)
     parser.add_argument('--rcnn-bbox-stds', type=str, default='(0.1, 0.1, 0.2, 0.2)')
     parser.add_argument('--rcnn-nms-thresh', type=float, default=0.3)
     parser.add_argument('--rcnn-conf-thresh', type=float, default=1e-3)
-    parser.add_argument('--is_bin', action='store_true', default=False)
-    parser.add_argument('--step', type=int, default=1)
+    parser.add_argument('--step', type=int, default=0)
     parser.add_argument('--prefix', type=str)
+    parser.add_argument('--config_filename', type=str)
     args = parser.parse_args()
-    args.img_pixel_means = ast.literal_eval(args.img_pixel_means)
-    args.img_pixel_stds = ast.literal_eval(args.img_pixel_stds)
-    args.rpn_anchor_scales = ast.literal_eval(args.rpn_anchor_scales)
-    args.rpn_anchor_ratios = ast.literal_eval(args.rpn_anchor_ratios)
-    args.rcnn_pooled_size = ast.literal_eval(args.rcnn_pooled_size)
     args.rcnn_bbox_stds = ast.literal_eval(args.rcnn_bbox_stds)
     return args
-
 
 def get_dataset(dataset, args):
     datasets = {
@@ -122,10 +110,13 @@ def get_dataset(dataset, args):
 
 
 def main():
+
     args = parse_args()
     imdb = get_dataset(args.dataset, args)
-    sym = get_network(args.network, args, 'test')
-    test_net(sym, imdb, args)
+    config = Config(args.config_filename)
+    sym = get_network(args.network, args, config, 'test')
+
+    test_net(sym, imdb, args, config)
 
 
 if __name__ == '__main__':
