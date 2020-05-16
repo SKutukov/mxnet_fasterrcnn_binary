@@ -1,4 +1,4 @@
-# Faster R-CNN in MXNet
+# 1-bit Quantized Faster R-CNN in MXNet
 Full precision          |  Binary precision
 :-------------------------:|:-------------------------:
 ![](resources/images/000969_fp.jpg)  |  ![](resources/images/000969_bp.jpg)
@@ -44,7 +44,7 @@ Download any of the following models to the current directory and run `python3 d
 For example `python3 demo.py --dataset voc --network vgg16 --params vgg16_voc0712.params --image myimage.jpg`, add `--gpu 0` to use GPU optionally.
 Different network has different configuration. Different dataset has different object class names. You must pass them explicitly as command line arguments.
 
-| step     | layer                         | mAP  | link                                         | speed-up | weight compressing |
+| step     | quanized layer                | mAP  | link                                         | speed-up | weight compressing |
 |----------|-------------------------------|------|----------------------------------------------|----------|--------------------|
 | оригинал | -                             | 0.76 | [original](https://yadi.sk/d/I9WiDe8fknLI2w) |     -    |          -         |
 | 1        | conv64 conv64 conv128 conv128 | 0.74 | [step1](https://yadi.sk/d/NV4lQ5wp_8L4-w)    |   1.83   |        0.18%       |
@@ -77,3 +77,6 @@ $ bash test_speed_up/run_speed_up.sh $DIR_WITH_WEIGHT $PATH_TO_BMXNET
 
 ### Disclaimer
 This repository mostly used faster-rcnn implementation from [MXNet incubator](https://github.com/apache/incubator-mxnet),
+
+### Reference 
+1. Training Competitive Binary Neural Networks from Scratch, Joseph Bethge and Marvin Bornstein and Adrian Loy and Haojin Yang and Christoph Meinel
