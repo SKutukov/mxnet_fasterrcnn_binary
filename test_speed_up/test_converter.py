@@ -19,13 +19,16 @@ def dummy_data(ctx):
 
 
 def save(ctx, args):
-    test_count = 1000
+    test_count = 200
 
     # Training loop would be here
     RES_FILENAME = "log.txt"
+    RES1_FILENAME = 'time_or.txt'
+    RES2_FILENAME = 'time_bn.txt'
     SPEEDUP_FILENAME = "speed.csv"
     if args.part == 1:
-        with open(RES_FILENAME, 'w') as res_file:
+        with open(RES_FILENAME, 'w') as res_file, \
+             open(RES1_FILENAME, 'a') as res1_file:
 
             data = mx.symbol.Variable(name="data")
             im_info = mx.symbol.Variable(name="im_info")
@@ -50,11 +53,13 @@ def save(ctx, args):
 
             print("time original : %f" % dt1)
             res_file.write("time original: %f\n" % dt1)
+            res1_file.write("%f\n" % dt1)
 
     # output = subprocess.check_output(["/home/skutukov/work/BMXNet-v2/build/tools/binary_converter/model-converter", param_file])
 
     with open(RES_FILENAME, 'a') as res_file, \
-         open(SPEEDUP_FILENAME, 'a') as CSV_file:
+         open(SPEEDUP_FILENAME, 'a') as CSV_file, \
+         open(RES2_FILENAME, 'a') as res2_file:
 
 
         if args.part == 2:
@@ -80,7 +85,7 @@ def save(ctx, args):
                     _ = orig_net(data_batch[0], data_batch[1])
 
             dt2 = (time.time() - star_time) / test_count
-
+            res2_file.write("%f\n" % dt2)
             print("time final compressed : %f" % dt2)
             print("speed up : %f" % (float(dt1) / dt2))
             res_file.write("time_final_compressed: %f\n" % dt2)

@@ -4,6 +4,8 @@ from symnet.model import load_param, check_shape
 from mxnet.module import Module
 from convert.convert_maps import get_weight_map
 import ast
+from symnet.factory import get_network
+from tools.config import Config
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Comvert Faster R-CNN network',
@@ -16,57 +18,15 @@ def parse_args():
     # faster rcnn params
     parser.add_argument('--img-short-side', type=int, default=600)
     parser.add_argument('--img-long-side', type=int, default=1000)
-    parser.add_argument('--rpn-feat-stride', type=int, default=16)
-    parser.add_argument('--rpn-anchor-scales', type=str, default='(8, 16, 32)')
-    parser.add_argument('--rpn-anchor-ratios', type=str, default='(0.5, 1, 2)')
-    parser.add_argument('--rpn-pre-nms-topk', type=int, default=12000)
-    parser.add_argument('--rpn-post-nms-topk', type=int, default=2000)
-    parser.add_argument('--rpn-nms-thresh', type=float, default=0.7)
-    parser.add_argument('--rpn-min-size', type=int, default=16)
     parser.add_argument('--rpn-batch-rois', type=int, default=256)
     parser.add_argument('--rpn-allowed-border', type=int, default=0)
-    parser.add_argument('--rpn-fg-fraction', type=float, default=0.5)
-    parser.add_argument('--rpn-fg-overlap', type=float, default=0.7)
-    parser.add_argument('--rpn-bg-overlap', type=float, default=0.3)
-    parser.add_argument('--rcnn-num-classes', type=int, default=21)
-    parser.add_argument('--rcnn-feat-stride', type=int, default=16)
-    parser.add_argument('--rcnn-pooled-size', type=str, default='(14, 14)')
     parser.add_argument('--rcnn-batch-size', type=int, default=1)
     parser.add_argument('--rcnn-batch-rois', type=int, default=128)
-    parser.add_argument('--rcnn-fg-fraction', type=float, default=0.25)
-    parser.add_argument('--rcnn-fg-overlap', type=float, default=0.5)
-    parser.add_argument('--rcnn-bbox-stds', type=str, default='(0.1, 0.1, 0.2, 0.2)')
     parser.add_argument('--is_bin', action='store_true', default=False)
     parser.add_argument('--step', type=int, default=1)
-    parser.add_argument('--img-pixel-means', type=str, default='(0.0, 0.0, 0.0)')
-    parser.add_argument('--img-pixel-stds', type=str, default='(1.0, 1.0, 1.0)')
-    parser.add_argument('--net-fixed-params', type=str, default='["conv0", "stage1", "gamma", "beta"]')
-
+    parser.add_argument('--config_filename', type=str)
     args = parser.parse_args()
-    args.img_pixel_means = ast.literal_eval(args.img_pixel_means)
-    args.img_pixel_stds = ast.literal_eval(args.img_pixel_stds)
-    args.net_fixed_params = ast.literal_eval(args.net_fixed_params)
-    args.rpn_anchor_scales = ast.literal_eval(args.rpn_anchor_scales)
-    args.rpn_anchor_ratios = ast.literal_eval(args.rpn_anchor_ratios)
-    args.rcnn_pooled_size = ast.literal_eval(args.rcnn_pooled_size)
-    args.rcnn_bbox_stds = ast.literal_eval(args.rcnn_bbox_stds)
     return args
-
-def get_vgg16_test(args):
-    from symnet.symbol_vgg import get_vgg_test
-    if not args.params:
-        args.params = 'model/vgg16-0010.params'
-    args.rpn_feat_stride = 16
-    args.rcnn_feat_stride = 16
-    args.rcnn_pooled_size = (7, 7)
-    return get_vgg_test(anchor_scales=args.rpn_anchor_scales, anchor_ratios=args.rpn_anchor_ratios,
-                        rpn_feature_stride=args.rpn_feat_stride, rpn_pre_topk=args.rpn_pre_nms_topk,
-                        rpn_post_topk=args.rpn_post_nms_topk, rpn_nms_thresh=args.rpn_nms_thresh,
-                        rpn_min_size=args.rpn_min_size,
-                        num_classes=args.rcnn_num_classes, rcnn_feature_stride=args.rcnn_feat_stride,
-                        rcnn_pooled_size=args.rcnn_pooled_size, rcnn_batch_size=args.rcnn_batch_size,
-                        isBin=args.is_bin,
-                        step=args.step)
 
 
 def convert_net(sym, args):
@@ -98,5 +58,6 @@ def convert_net(sym, args):
 
 if __name__ == '__main__':
     args = parse_args()
-    net = get_vgg16_test(args)
+    config = Config(args.config_filename)
+    net = get_network(args.network, args, config, 'test')
     convert_net(net, args)

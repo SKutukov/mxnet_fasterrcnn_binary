@@ -169,6 +169,14 @@ weight_map_5 = {
 }
 weight_map_res = {}
 
+
+weight_map_retina = {}
+for i in range(1, 2):
+    for j in range(12):
+        for k in range(10):
+            weight_map_retina['stage{}_unit{}_conv{}_weight'.format(i, j, k)] = \
+            'stage{}_unit{}_qconv{}_weight'.format(i, j, k)
+
 def load_param(params, ctx=None, weight_map=None):
     """same as mx.model.load_checkpoint, but do not load symnet and will convert context"""
     if ctx is None:
@@ -179,11 +187,11 @@ def load_param(params, ctx=None, weight_map=None):
     for k, v in save_dict.items():
         tp, name = k.split(':', 1)
 
-        # if name in weight_map_5.keys():
-        #     name = weight_map_5[name]
-        if weight_map is not None:
-            if name in weight_map.keys():
-                name = weight_map[name]
+        if name in weight_map_retina.keys():
+            name = weight_map_retina[name]
+        # if weight_map is not None:
+        #     if name in weight_map.keys():
+        #         name = weight_map[name]
 
         if tp == 'arg':
             arg_params[name] = v.as_in_context(ctx)

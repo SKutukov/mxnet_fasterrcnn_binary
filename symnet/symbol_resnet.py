@@ -13,7 +13,7 @@ def residual_unit(data, num_filter, stride, dim_match, name, isBin=False):
     act1 = mx.sym.Activation(data=bn1, act_type='relu', name=name + '_relu1')
     if isBin:
         gluon_layer1 = nn.QConv2D(channels=int(num_filter * 0.25), kernel_size=(1, 1), strides=(1, 1), padding=(0, 0),
-                                 prefix=name + '_conv1_', apply_scaling=True)
+                                  bits=1, prefix=name + '_qconv1_', apply_scaling=True)
         gluon_layer1.hybridize()
         conv1 = gluon_layer1(act1)
     else:
@@ -23,7 +23,7 @@ def residual_unit(data, num_filter, stride, dim_match, name, isBin=False):
     act2 = mx.sym.Activation(data=bn2, act_type='relu', name=name + '_relu2')
     if isBin:
         gluon_layer2 = nn.QConv2D(channels=int(num_filter * 0.25), kernel_size=3, strides=stride, padding=(1, 1),
-                                 prefix=name + '_conv2_', apply_scaling=True)
+                                  bits=1, prefix=name + '_qconv2_', apply_scaling=True)
         gluon_layer2.hybridize()
         conv2 = gluon_layer2(act2)
     else:
@@ -33,7 +33,7 @@ def residual_unit(data, num_filter, stride, dim_match, name, isBin=False):
     act3 = mx.sym.Activation(data=bn3, act_type='relu', name=name + '_relu3')
     if isBin:
         gluon_layer3 = nn.QConv2D(channels=num_filter, kernel_size=(1, 1), strides=(1, 1), padding=(0, 0),
-                                 prefix=name + '_conv3_', apply_scaling=True)
+                                  bits=1, prefix=name + '_qconv3_', apply_scaling=True)
         gluon_layer3.hybridize()
         conv3 = gluon_layer3(act3)
     else:
@@ -90,15 +90,10 @@ class ResidualUnit(nn.HybridBlock):
         feat = self.features(x)
         return feat + shortcut
 
-step_res_101_spec = {
-    0: [],
-    1: [],
-    2: [],
-    3: [],
-    4: [],
-    5: []
-}
-def get_resnet_feature(data, units, filter_list):
+def get_spec(step, count=6):
+    return [True] * step + [False] * (count - step)
+
+def get_resnet_feature(data, units, filter_list, step):
     # res1
     data_bn = mx.sym.BatchNorm(data=data, fix_gamma=True, eps=eps, use_global_stats=use_global_stats, name='bn_data')
     conv0 = mx.sym.Convolution(data=data_bn, num_filter=64, kernel=(7, 7), stride=(2, 2), pad=(3, 3),
@@ -109,34 +104,34 @@ def get_resnet_feature(data, units, filter_list):
 
     # res2
     unit = residual_unit(data=pool0, num_filter=filter_list[0], stride=(1, 1), dim_match=False,
-                         name='stage1_unit1', isBin=True)
+                         name='stage1_unit1', isBin=get_spec(step)[0])
     for i in range(2, units[0] + 1):
         unit = residual_unit(data=unit, num_filter=filter_list[0], stride=(1, 1), dim_match=True,
-                             name='stage1_unit%s' % i, isBin=True)
+                             name='stage1_unit%s' % i, isBin=get_spec(step)[0])
 
     # res3
     unit = residual_unit(data=unit, num_filter=filter_list[1], stride=(2, 2), dim_match=False, name='stage2_unit1',
-                         isBin=True)
+                         isBin=get_spec(step)[1])
     for i in range(2, units[1] + 1):
         unit = residual_unit(data=unit, num_filter=filter_list[1], stride=(1, 1), dim_match=True,
 
-                             name='stage2_unit%s' % i, isBin=True)
+                             name='stage2_unit%s' % i, isBin=get_spec(step)[1])
 
     # res4
     unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(2, 2), dim_match=False, name='stage3_unit1',
-                         isBin=True)
+                         isBin=get_spec(step)[2])
     #2.5
     for i in range(2, (units[2] + 1)//2):
         unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(1, 1), dim_match=True, name='stage3_unit%s' % i,
-                             isBin=True)
+                             isBin=get_spec(step)[3])
     #2.7
     for i in range((units[2] + 1)//2, 3*((units[2] + 1)//4)):
         unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(1, 1), dim_match=True, name='stage3_unit%s' % i,
-                             isBin=True)
+                             isBin=get_spec(step)[4])
 
     for i in range(3*((units[2] + 1)//4), units[2] + 1):
         unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(1, 1), dim_match=True, name='stage3_unit%s' % i,
-                             isBin=True)
+                             isBin=get_spec(step)[5])
     return unit
 
 
@@ -154,7 +149,8 @@ def get_resnet_train(anchor_scales, anchor_ratios, rpn_feature_stride,
                      rpn_pre_topk, rpn_post_topk, rpn_nms_thresh, rpn_min_size, rpn_batch_rois,
                      num_classes, rcnn_feature_stride, rcnn_pooled_size, rcnn_batch_size,
                      rcnn_batch_rois, rcnn_fg_fraction, rcnn_fg_overlap, rcnn_bbox_stds,
-                     units, filter_list):
+                     units, filter_list,
+                     step):
     num_anchors = len(anchor_scales) * len(anchor_ratios)
 
     data = mx.symbol.Variable(name="data")
@@ -165,7 +161,7 @@ def get_resnet_train(anchor_scales, anchor_ratios, rpn_feature_stride,
     rpn_bbox_weight = mx.symbol.Variable(name='bbox_weight')
 
     # shared convolutional layers
-    conv_feat = get_resnet_feature(data, units=units, filter_list=filter_list)
+    conv_feat = get_resnet_feature(data, units=units, filter_list=filter_list, step=step)
 
     # rpn feature
     rpn_conv = mx.symbol.Convolution(
@@ -236,14 +232,14 @@ def get_resnet_train(anchor_scales, anchor_ratios, rpn_feature_stride,
 def get_resnet_test(anchor_scales, anchor_ratios, rpn_feature_stride,
                     rpn_pre_topk, rpn_post_topk, rpn_nms_thresh, rpn_min_size,
                     num_classes, rcnn_feature_stride, rcnn_pooled_size, rcnn_batch_size,
-                    units, filter_list):
+                    units, filter_list, step):
     num_anchors = len(anchor_scales) * len(anchor_ratios)
 
     data = mx.symbol.Variable(name="data")
     im_info = mx.symbol.Variable(name="im_info")
 
     # shared convolutional layers
-    conv_feat = get_resnet_feature(data, units=units, filter_list=filter_list)
+    conv_feat = get_resnet_feature(data, units=units, filter_list=filter_list, step=step)
 
     # rpn feature
     rpn_conv = mx.symbol.Convolution(

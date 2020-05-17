@@ -22,7 +22,7 @@ for file in $1/*.params;
 
   echo $bin_param_file
   echo $bin_symbol_file
-  for i in $(seq 1 100); do
+  for i in $(seq 1 1000); do
     # remove old file
     rm log.txt
     # calc time of original nn
@@ -47,4 +47,6 @@ for file in $1/*.params;
     --log_path $DIR/$base-result.txt
 
   cp speed.csv $DIR/$base-speed.csv
+  cp time_or.txt $DIR/$base-time_or.csv
+  cp time_bn.txt $DIR/$base-time_bn.csv
 done

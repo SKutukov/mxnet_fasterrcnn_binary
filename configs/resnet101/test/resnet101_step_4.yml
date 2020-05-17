@@ -1,0 +1,23 @@
+rpn:
+  rpn_feat_stride: 16
+  rpn_anchor_scales: !!python/tuple [8, 16, 32]
+  rpn_anchor_ratios: !!python/tuple [0.5, 1, 2]
+  rpn_pre_nms_topk: 6000
+  rpn_post_nms_topk: 300
+  rpn_min_size: 16
+  rpn_nms_thresh: 0.7
+
+rcnn:
+  rcnn_feat_stride: 16
+  rcnn_pooled_size: !!python/tuple [14, 14]
+  rcnn_num_classes: 21
+
+train_param:
+  net_fixed_params: ['vgg0_conv0_', 'vgg0_qconv0', 'vgg0_qconv1', 'vgg0_qconv2',
+                     'vgg0_qconv3', 'vgg0_qconv4', 'vgg0_qconv5',
+                     'vgg0_qconv6', 'vgg0_qconv7', 'vgg0_qconv8']
+  is_rcnn_top_bin: False
+
+transform:
+  img_pixel_means: !!python/tuple [0.0, 0.0, 0.0]
+  img_pixel_stds: !!python/tuple [1.0, 1.0, 1.0]
