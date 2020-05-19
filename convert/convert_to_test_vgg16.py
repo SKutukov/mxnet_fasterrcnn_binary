@@ -11,7 +11,6 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Comvert Faster R-CNN network',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--network', type=str, default='vgg16', help='base network')
-    parser.add_argument('--pretrained', type=str, default='', help='path to pretrained model')
     parser.add_argument('--dataset', type=str, default='voc', help='training dataset')
     parser.add_argument('--params', type=str, default='', help='path to last saved model')
     parser.add_argument('--save-prefix', type=str, default='', help='path to last saved model')
@@ -22,7 +21,6 @@ def parse_args():
     parser.add_argument('--rpn-allowed-border', type=int, default=0)
     parser.add_argument('--rcnn-batch-size', type=int, default=1)
     parser.add_argument('--rcnn-batch-rois', type=int, default=128)
-    parser.add_argument('--is_bin', action='store_true', default=False)
     parser.add_argument('--step', type=int, default=1)
     parser.add_argument('--config_filename', type=str)
     args = parser.parse_args()

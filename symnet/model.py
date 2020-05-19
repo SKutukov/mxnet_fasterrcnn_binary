@@ -187,11 +187,11 @@ def load_param(params, ctx=None, weight_map=None):
     for k, v in save_dict.items():
         tp, name = k.split(':', 1)
 
-        if name in weight_map_retina.keys():
-            name = weight_map_retina[name]
-        # if weight_map is not None:
-        #     if name in weight_map.keys():
-        #         name = weight_map[name]
+        # if name in weight_map_retina.keys():
+        #     name = weight_map_retina[name]
+        if weight_map is not None:
+            if name in weight_map.keys():
+                name = weight_map[name]
 
         if tp == 'arg':
             arg_params[name] = v.as_in_context(ctx)

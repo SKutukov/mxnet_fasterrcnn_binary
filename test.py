@@ -17,6 +17,7 @@ from datasets.voc import get_voc_test
 from datasets.coco import get_coco_test
 from symnet.factory import get_network
 
+import os
 
 def test_net(sym, imdb, args, config):
     logger.addHandler(logging.FileHandler("{0}/{1}".format(args.prefix, 'test.log')))
@@ -112,6 +113,9 @@ def get_dataset(dataset, args):
 def main():
 
     args = parse_args()
+    if not os.path.isdir(args.prefix):
+        os.makedirs(args.prefix)
+
     imdb = get_dataset(args.dataset, args)
     config = Config(args.config_filename)
     sym = get_network(args.network, args, config, 'test')

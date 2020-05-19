@@ -123,15 +123,15 @@ def get_resnet_feature(data, units, filter_list, step):
     #2.5
     for i in range(2, (units[2] + 1)//2):
         unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(1, 1), dim_match=True, name='stage3_unit%s' % i,
-                             isBin=get_spec(step)[3])
+                             isBin=get_spec(step)[2])
     #2.7
     for i in range((units[2] + 1)//2, 3*((units[2] + 1)//4)):
         unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(1, 1), dim_match=True, name='stage3_unit%s' % i,
-                             isBin=get_spec(step)[4])
+                             isBin=get_spec(step)[3])
 
     for i in range(3*((units[2] + 1)//4), units[2] + 1):
         unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(1, 1), dim_match=True, name='stage3_unit%s' % i,
-                             isBin=get_spec(step)[5])
+                             isBin=get_spec(step)[3])
     return unit
 
 
