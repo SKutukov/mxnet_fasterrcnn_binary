@@ -18,10 +18,9 @@ rcnn:
   rcnn_fg_fraction: 0.25
   rcnn_fg_overlap: 0.5
 
-
 train_param:
-  net_fixed_params: ['vgg0_conv0_']
-  is_rcnn_top_bin: False
+  net_fixed_params: ['vgg0_conv0']
+  is_rcnn_top_bin: True
 
 transform:
   img_pixel_means: !!python/tuple [123.68, 116.779, 103.939]

@@ -16,7 +16,7 @@ step_spec = {
     5: (0,)
 }
 class VGG(nn.HybridBlock):
-    def __init__(self, layers, filters, classes=1000, batch_norm=False, isBin=False, step=0, **kwargs):
+    def __init__(self, layers, filters, classes=1000, batch_norm=True, isBin=False, step=0, **kwargs):
         super(VGG, self).__init__(**kwargs)
         assert len(layers) == len(filters)
         with self.name_scope():
@@ -65,6 +65,7 @@ class VGG(nn.HybridBlock):
                                              bits=1,
                                             apply_scaling=True)
                     featurizer.add(conv_layer)
+                    featurizer.add(nn.Dropout(rate=0.25))
                     featurizer.add(nn.Activation('relu'))
                 else:
                     conv_layer = nn.Conv2D(filters[i], kernel_size=3, padding=1,
@@ -73,6 +74,7 @@ class VGG(nn.HybridBlock):
                                                         magnitude=2),
                               bias_initializer='zeros')
                     featurizer.add(conv_layer)
+                    featurizer.add(nn.Dropout(rate=0.25))
                     featurizer.add(nn.Activation('relu'))
 
                 count += 1

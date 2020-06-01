@@ -154,7 +154,14 @@ weight_map_3_4 = {
         'vgg0_conv3_bias'   :'vgg0_qconv11_bias', #512 12
 }
 
-weight_map_4 = {
+weight_map_4_5 = {
+    'vgg1_dense0_weight': 'vgg1_qdense0_weight',
+    'vgg1_dense0_bias': 'vgg1_qdense0_bias',
+    'vgg1_dense1_weight': 'vgg1_dense0_weight',
+    'vgg1_dense1_bias': 'vgg1_dense0_bias',
+}
+
+weight_map_4_15 = {
     'fc6_weight': 'vgg1_qdense0_weight',
     'fc6_bias': 'vgg1_qdense0_bias',
     'fc7_weight': 'vgg1_dense0_weight',
@@ -187,11 +194,11 @@ def load_param(params, ctx=None, weight_map=None):
     for k, v in save_dict.items():
         tp, name = k.split(':', 1)
 
-        # if name in weight_map_retina.keys():
-        #     name = weight_map_retina[name]
-        if weight_map is not None:
-            if name in weight_map.keys():
-                name = weight_map[name]
+        # if name in weight_map_0_1.keys():
+        #     name = weight_map_0_1[name]
+        # if weight_map is not None:
+        #     if name in weight_map.keys():
+        #         name = weight_map[name]
 
         if tp == 'arg':
             arg_params[name] = v.as_in_context(ctx)
@@ -250,31 +257,31 @@ def initialize_bias(symbol, data_shapes, arg_params, aux_params):
         2: list(range(1, 5)),
         3: list(range(1, 7)),
     }
-    for i in range(1, 4):
-        for j in units[i]:
-            for k in [2, 3]:
-                # init arg params
-                # gamma_name = 'stage%d_unit%d_nb%d_gamma' % (i, j, k)
-                # beta_name = 'stage%d_unit%d_nb%d_beta' % (i, j, k)
-                # arg_params[gamma_name] = mx.random.normal(0.9, 1, shape=arg_shape_dict[gamma_name])
-                # arg_params[beta_name] = mx.random.normal(0., 0.1, shape=arg_shape_dict[beta_name])
+    # for i in range(1, 4):
+    #     for j in units[i]:
+    #         for k in [2, 3]:
+    #             # init arg params
+    #             gamma_name = 'stage%d_unit%d_nb%d_gamma' % (i, j, k)
+    #             beta_name = 'stage%d_unit%d_nb%d_beta' % (i, j, k)
+    #             arg_params[gamma_name] = mx.random.normal(0.9, 1, shape=arg_shape_dict[gamma_name])
+    #             arg_params[beta_name] = mx.random.normal(0., 0.1, shape=arg_shape_dict[beta_name])
+    #
+    #             running_mean = 'stage%d_unit%d_nb%d_running_mean' % (i, j, k)
+    #             running_var = 'stage%d_unit%d_nb%d_running_var' % (i, j, k)
+    #             aux_params[running_mean] = mx.random.normal(0.0, 0.1, shape=aux_shape_dict[running_mean])
+    #             aux_params[running_var] = mx.random.normal(0.9, 1, shape=aux_shape_dict[running_var])
 
-                # running_mean = 'stage%d_unit%d_nb%d_running_mean' % (i, j, k)
-                # running_var = 'stage%d_unit%d_nb%d_running_var' % (i, j, k)
-                # aux_params[running_mean] = mx.random.normal(0.0, 0.1, shape=aux_shape_dict[running_mean])
-                # aux_params[running_var] = mx.random.normal(0.9, 1, shape=aux_shape_dict[running_var])
-                pass
-    # for i in range(0, 13):
-    #     # init arg params
-    #     gamma_name = 'vgg0_batchnorm%d_gamma' % i
-    #     beta_name = 'vgg0_batchnorm%d_beta' % i
-    #     arg_params[gamma_name] = mx.random.normal(0.8, 1, shape=arg_shape_dict[gamma_name])
-    #     arg_params[beta_name] = mx.random.normal(0.4, 0.6, shape=arg_shape_dict[beta_name])
-    #     # init aux params
-    #     running_mean = 'vgg0_batchnorm%d_running_mean' % i
-    #     running_var = 'vgg0_batchnorm%d_running_var' % i
-    #     aux_params[running_mean] = mx.random.normal(0.4, 0.6, shape=aux_shape_dict[running_mean])
-    #     aux_params[running_var] = mx.random.normal(0.8, 1, shape=aux_shape_dict[running_var])
+    for i in range(0, 13):
+        # init arg params
+        gamma_name = 'vgg0_batchnorm%d_gamma' % i
+        beta_name = 'vgg0_batchnorm%d_beta' % i
+        arg_params[gamma_name] = mx.random.normal(0.9, 1, shape=arg_shape_dict[gamma_name])
+        arg_params[beta_name] = mx.random.normal(0.0, 0.1, shape=arg_shape_dict[beta_name])
+        # init aux params
+        running_mean = 'vgg0_batchnorm%d_running_mean' % i
+        running_var = 'vgg0_batchnorm%d_running_var' % i
+        aux_params[running_mean] = mx.random.normal(0.0, 0.1, shape=aux_shape_dict[running_mean])
+        aux_params[running_var] = mx.random.normal(0.9, 1, shape=aux_shape_dict[running_var])
     #
     # for i in  range(0, 13): #(0, 1):
     #     conv_name = 'vgg0_conv%d_weight' % i

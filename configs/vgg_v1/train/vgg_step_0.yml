@@ -20,7 +20,7 @@ rcnn:
 
 
 train_param:
-  net_fixed_params: ['vgg0_conv0_']
+  net_fixed_params: ['vgg0_conv0_', 'vgg0_conv1_']
   is_rcnn_top_bin: False
 
 transform:

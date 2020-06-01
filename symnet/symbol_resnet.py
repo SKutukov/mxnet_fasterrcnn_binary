@@ -13,7 +13,7 @@ def residual_unit(data, num_filter, stride, dim_match, name, isBin=False):
     act1 = mx.sym.Activation(data=bn1, act_type='relu', name=name + '_relu1')
     if isBin:
         gluon_layer1 = nn.QConv2D(channels=int(num_filter * 0.25), kernel_size=(1, 1), strides=(1, 1), padding=(0, 0),
-                                  bits=1, prefix=name + '_qconv1_', apply_scaling=True)
+                                  bits=1, prefix=name + '_conv1_', apply_scaling=True)
         gluon_layer1.hybridize()
         conv1 = gluon_layer1(act1)
     else:
@@ -23,7 +23,7 @@ def residual_unit(data, num_filter, stride, dim_match, name, isBin=False):
     act2 = mx.sym.Activation(data=bn2, act_type='relu', name=name + '_relu2')
     if isBin:
         gluon_layer2 = nn.QConv2D(channels=int(num_filter * 0.25), kernel_size=3, strides=stride, padding=(1, 1),
-                                  bits=1, prefix=name + '_qconv2_', apply_scaling=True)
+                                  bits=1, prefix=name + '_conv2_', apply_scaling=True)
         gluon_layer2.hybridize()
         conv2 = gluon_layer2(act2)
     else:
@@ -33,7 +33,7 @@ def residual_unit(data, num_filter, stride, dim_match, name, isBin=False):
     act3 = mx.sym.Activation(data=bn3, act_type='relu', name=name + '_relu3')
     if isBin:
         gluon_layer3 = nn.QConv2D(channels=num_filter, kernel_size=(1, 1), strides=(1, 1), padding=(0, 0),
-                                  bits=1, prefix=name + '_qconv3_', apply_scaling=True)
+                                  bits=1, prefix=name + '_conv3_', apply_scaling=True)
         gluon_layer3.hybridize()
         conv3 = gluon_layer3(act3)
     else:

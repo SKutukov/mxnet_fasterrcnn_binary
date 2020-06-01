@@ -1,8 +1,8 @@
 import random
 
-filename = '/home/skutukov/work/data/VOCdevkit/VOC2007/ImageSets/Main/test.txt'
+filename = '/home/skutukov/work/data/VOCdevkitMNIST10/VOC2007/ImageSets/Main/test.txt'
 
-for j in range(0, 5):
+for j in range(0, 1):
     with open(filename) as test_file:
         imgs = test_file.readlines()
         random.shuffle(imgs)

@@ -2,7 +2,7 @@ import argparse
 import cv2
 import pandas as pd
 import os
-from mnist.image_generator import ImageGenerator
+from dataset_generator_mnist.image_generator import ImageGenerator
 
 
 def parse_argument():
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     # write csv to filesystem
     path_to_train_csv = "res_train.csv"
     path_to_val_csv = "res_val.csv"
-    split_count = int(args.count * 0.8)
+    split_count = int(args.count * 0.5)
     df_result_train, df_result_val = df_result.iloc[:split_count, :], df_result.iloc[split_count:, :]
 
     full_path_to_csv = os.path.join(out_path, path_to_train_csv)

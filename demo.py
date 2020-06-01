@@ -41,10 +41,10 @@ def demo_net(sym, class_names, args):
     f = open("/home/skutukov/datasets/VOCdevkit/VOC2007/ImageSets/Main/test.txt", "r")
     for file in tqdm.tqdm(f.readlines()):
         path = os.path.join(args.image, str(file).strip() + '.jpg')
-
+        path = '/home/skutukov/Pictures/demo.jpg'
         # load single test
         im_tensor, im_info, im_orig = load_test(path, short=args.img_short_side, max_size=args.img_long_side,
-                                                mean=args.img_pixel_means, std=args.img_pixel_stds)
+                                                mean=args.img_pixel_means, std=args.img_pixel_stds, ctx=ctx)
 
         # generate data batch
         data_batch = generate_batch(im_tensor, im_info)
@@ -69,6 +69,8 @@ def demo_net(sym, class_names, args):
         # if vis
         if args.vis:
             vis_detection(im_orig, det, class_names, thresh=args.vis_thresh, file=file)
+
+        break
 
 
 def parse_args():

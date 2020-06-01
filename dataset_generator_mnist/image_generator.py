@@ -1,6 +1,6 @@
 import cv2
 import random
-from utils.bbox import BBox
+from tools.bbox import BBox
 import os
 import numpy as np
 

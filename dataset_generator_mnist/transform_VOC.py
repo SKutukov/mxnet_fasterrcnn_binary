@@ -2,7 +2,7 @@ import argparse
 import cv2
 import pandas as pd
 import os
-from mnist.image_generator import ImageGenerator
+from dataset_generator_mnist.image_generator import ImageGenerator
 from lxml import etree
 
 def parse_argument():
@@ -62,6 +62,12 @@ if __name__ == "__main__":
 
     if not os.path.exists(os.path.join(out_path, "MNIST", "ImageSets", "Main")):
         os.mkdir(os.path.join(out_path, "MNIST", "ImageSets", "Main"))
+    # bash scripts / run_test_faster_rcnn_qvgg_CI.sh 2;  bash scripts / run_test_faster_rcnn_qvgg_CI.sh  3;  bash  scripts / run_test_faster_rcnn_qvgg_CI.sh 4; bash scripts / run_test_faster_rcnn_qvgg_CI.sh   # 5;  bash
+    # scripts / run_test_faster_rcnn_qvgg_CI.sh
+    # 1;
+    # bash
+    # scripts / run_test_faster_rcnn_qvgg_CI.sh
+    # 0
 
     file_ids = []
     # begin generate dataset
@@ -105,7 +111,7 @@ if __name__ == "__main__":
         for box, number in zip(bboxes, numbers):
             child_box = etree.Element('object')
             child_name = etree.Element('name')
-            child_name.text = "number"
+            child_name.text = class_dict[number]
             child_box.append(child_name)
 
             child_pose = etree.Element('pose')
@@ -148,10 +154,10 @@ if __name__ == "__main__":
             xml_file.write(s)
         xml_file.close()
 
-    file_ids_train = file_ids[:int(0.8 * len(file_ids))]
-    file_ids_val = file_ids[int(0.8 * len(file_ids)):]
-    train_path = os.path.join(out_path, "MNIST", "ImageSets", "Main", "train.txt")
-    val_path = os.path.join(out_path, "MNIST", "ImageSets", "Main", "val.txt")
+    file_ids_train = file_ids[:int(0.25 * len(file_ids))]
+    file_ids_val = file_ids[int(0.25 * len(file_ids)):]
+    train_path = os.path.join(out_path, "MNIST", "ImageSets", "Main", "trainval.txt")
+    val_path = os.path.join(out_path, "MNIST", "ImageSets", "Main", "test.txt")
 
     with open(train_path, "a") as train_file:
         for index in file_ids_train:

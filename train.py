@@ -62,7 +62,7 @@ def train_net(sym, roidb, args, config):
     else:
         arg_params, aux_params = load_param(args.pretrained)
         arg_params, aux_params = initialize_frcnn(sym, data_shapes, arg_params, aux_params)
-        # arg_params, aux_params = initialize_bias(sym, data_shapes, arg_params, aux_params)
+        arg_params, aux_params = initialize_bias(sym, data_shapes, arg_params, aux_params)
     # check parameter shapes
     check_shape(sym, data_shapes + label_shapes, arg_params, aux_params)
 
@@ -122,7 +122,7 @@ def parse_args():
     parser.add_argument('--gpus', type=str, default='0', help='gpu devices eg. 0,1')
     parser.add_argument('--epochs', type=int, default=10, help='training epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='base learning rate')
-    parser.add_argument('--lr-decay-epoch', type=str, default='7,15', help='epoch to decay lr')
+    parser.add_argument('--lr-decay-epoch', type=str, default='7,15, 45', help='epoch to decay lr')
     parser.add_argument('--resume', type=str, default='', help='path to last saved model')
     parser.add_argument('--start-epoch', type=int, default=0, help='start epoch for resuming')
     parser.add_argument('--log-interval', type=int, default=100, help='logging mini batch interval')

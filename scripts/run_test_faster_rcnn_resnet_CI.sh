@@ -1,13 +1,13 @@
 step=$1
 
-for i in {3..25};
+for i in {0..9};
  do
   imageset=2007_test-${i}
   echo $imageset
 
   python3 test.py \
     --params \
-   /home/skutukov/Documents/mdel_resnet_test/fasterrcnn_resnet_stage${step}-0000.params \
+   resnet101_MNIST_step_${step}/-0023.params \
     --step ${step} \
     --prefix ${step}/CI_$i/ \
     --dataset voc \

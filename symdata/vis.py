@@ -25,4 +25,4 @@ def vis_detection(im_orig, detections, class_names, file='', thresh=0.7):
     # # plt.show()
     # plt.savefig('test.png')
     # cv2.imshow("d", im_orig)
-    cv2.imwrite(os.path.join('/home/skutukov/Pictures/result_full_precision', file.strip() + '.jpg'), im_orig)
+    cv2.imwrite(os.path.join('/home/skutukov/Pictures/', file.strip() + '222.jpg'), im_orig)

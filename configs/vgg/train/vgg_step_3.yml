@@ -19,8 +19,7 @@ rcnn:
   rcnn_fg_overlap: 0.5
 
 train_param:
-  net_fixed_params: ['vgg0_conv0_', 'vgg0_qconv0', 'vgg0_qconv1', 'vgg0_qconv2',
-                     'vgg0_qconv3', 'vgg0_qconv4', 'vgg0_qconv5']
+  net_fixed_params: ['vgg0_conv0_']
   is_rcnn_top_bin: False
 
 transform:

@@ -5,7 +5,7 @@ from symdata.anchor import AnchorGenerator, AnchorSampler
 from symdata.image import imdecode, resize, transform, get_image, tensor_vstack
 
 
-def load_test(filename, short, max_size, mean, std):
+def load_test(filename, short, max_size, mean, std, ctx):
     # read and transform image
     im_orig = imdecode(filename)
     im, im_scale = resize(im_orig, short, max_size)
@@ -16,8 +16,8 @@ def load_test(filename, short, max_size, mean, std):
     im_tensor = transform(im, mean, std)
 
     # for 1-batch inference purpose, cannot use batchify (or nd.stack) to expand dims
-    im_tensor = mx.nd.array(im_tensor).expand_dims(0)
-    im_info = mx.nd.array(im_info).expand_dims(0)
+    im_tensor = mx.nd.array(im_tensor, ctx=ctx).expand_dims(0)
+    im_info = mx.nd.array(im_info, ctx=ctx).expand_dims(0)
 
     # transform cv2 BRG image to RGB for matplotlib
     im_orig = im_orig[:, :, (2, 1, 0)]

@@ -14,12 +14,12 @@ def dummy_data(ctx):
     im_tensor, im_info, im_orig = load_test(path_to_image, short=img_short_side, max_size=img_long_side,
                                             mean=img_pixel_means, std=img_pixel_stds, ctx=ctx)
     # data_batch = generate_batch(im_tensor, im_info)
-    return mx.nd.random.randn(3, 300, 300, ctx=ctx) #im_tensor
+    return im_tensor
 
 # bash test_speed_up/run_speed_up.sh  ~/Documents/model_test/ ~/work/BMXNet-v2/
 
 def save(ctx, args):
-    test_count = 1000
+    test_count = 100
 
     # Training loop would be here
     RES_FILENAME = "log.txt"
@@ -120,4 +120,4 @@ def parse_args():
 
 if __name__== "__main__":
     args = parse_args()
-    save(ctx=mx.gpu(0), args=args)
+    save(ctx=mx.cpu(), args=args)
